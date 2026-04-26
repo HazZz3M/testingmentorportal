@@ -1312,10 +1312,27 @@
             text-transform: uppercase;
         }
 
-        [data-theme="dark"] .badge {
+        .badge.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .badge.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        [data-theme="dark"] .badge:not(.success):not(.danger) {
             background: rgba(255, 233, 44, 0.1);
             color: var(--accent);
             border-color: rgba(255, 233, 44, 0.5);
+        }
+
+        .badge:active {
+            transform: scale(0.9) !important;
+            opacity: 0.7;
         }
 
         .badge.s-idea {
@@ -3604,8 +3621,8 @@
                     <td>Column ${q.column}</td>
                     <td style="text-align:center">${q.order}</td>
                     <td style="text-align:center">
-                        <button class="badge ${q.visible ? 'success' : ''}" style="cursor:pointer; border:none" onclick="toggleVisibilityByIndex(${idx})">
-                            ${q.visible ? 'نعم' : 'لا'}
+                        <button class="badge ${q.visible ? 'success' : 'danger'}" style="cursor:pointer; border-radius:12px; transition:all 0.2s;" onclick="toggleVisibilityByIndex(${idx})">
+                            ${q.visible ? '✓ ظاهر' : '✗ مخفي'}
                         </button>
                     </td>
                     <td style="text-align:center">
@@ -3655,6 +3672,7 @@
 
         const toggleVisibilityByIndex = (idx) => {
             currentQuestions[idx].visible = !currentQuestions[idx].visible;
+            renderQuestionsList(); // Optimistic UI
             saveQuestionsBatch();
         };
 
@@ -3936,6 +3954,13 @@
                     </div>
                 `).join('');
             }).getMentors(id);
+        }
+
+        function selectMentorCard(name, el) {
+            const parent = el.parentElement;
+            parent.querySelectorAll('.round-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            $('mentorName').value = name;
         }
 
         const renderDynamicFields = (containerId, type, callback) => {
