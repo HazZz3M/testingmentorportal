@@ -4063,11 +4063,13 @@
             const dynamic = collectDynamicData('feedbackForm', 'feedback');
             Object.assign(formData, dynamic);
 
-            showLoading('Saving feedback...');
+            showLoading(lang === 'ar' ? 'جاري الحفظ...' : 'Saving feedback...');
             google.script.run.withSuccessHandler(function () {
                 hideLoading();
-                toast('Feedback saved');
+                toast(lang === 'ar' ? 'تم إرسال التقرير بنجاح!' : 'Feedback submitted successfully!');
+                markClean();
                 closeFeedbackModal();
+                followUpData = [];
                 loadFollowUpLazy();
             }).withFailureHandler(function (err) {
                 hideLoading();
@@ -4092,10 +4094,11 @@
             const dynamic = collectDynamicData('diagnoseForm', 'diagnose');
             Object.assign(formData, dynamic);
 
-            showLoading('Saving diagnose...');
+            showLoading(lang === 'ar' ? 'جاري حفظ التشخيص...' : 'Saving diagnose...');
             google.script.run.withSuccessHandler(function () {
                 hideLoading();
-                toast('Diagnose saved');
+                toast(lang === 'ar' ? 'تم حفظ التشخيص بنجاح!' : 'Diagnose saved successfully!');
+                markClean();
                 closeDiagnoseModal();
             }).withFailureHandler(function (err) {
                 hideLoading();
@@ -4114,11 +4117,14 @@
             const dynamic = collectDynamicData('editFollowupForm', 'feedback');
             Object.assign(formData, dynamic);
 
-            showLoading('Saving changes...');
+            const lang = document.documentElement.getAttribute('lang') || 'ar';
+            showLoading(lang === 'ar' ? 'جاري حفظ التعديلات...' : 'Saving changes...');
             google.script.run.withSuccessHandler(function () {
                 hideLoading();
-                toast('Changes saved');
+                toast(lang === 'ar' ? 'تم حفظ التعديلات بنجاح!' : 'Changes saved successfully!');
+                markClean();
                 closeEditFollowupModal();
+                followUpData = [];
                 loadFollowUpLazy();
             }).withFailureHandler(function (err) {
                 hideLoading();
@@ -4446,130 +4452,16 @@
             $('diagnoseBtn').addEventListener('click', openDiagnoseModal);
             $('langToggle').addEventListener('click', function () { const cur = document.documentElement.getAttribute('lang') || 'ar'; langApply(cur === 'ar' ? 'en' : 'ar') });
 
-            $('diagnoseForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                const btn = $('dSubmitBtn');
-                btn.disabled = true;
-                showLoading('Saving diagnose...');
 
-                const company = $('dCompanyName').value;
-                const age = $('dCompanyAge').value;
-                const loc = $('dLocation').value;
-                const size = $('dTeamSize').value;
 
-                // Combined string for Column C
-                const combined = `${company} \\ ${age} \\ ${loc} \\ ${size}`;
 
-                const formData = {
-                    mentorName: $('dMentorName').value,
-                    companyName: company,
-                    companyCombined: combined,
-                    history: $('dHistory').value,
-                    mainComplaint: $('dMainComplaint').value,
-                    symptoms: $('dSymptoms').value,
-                    signs: $('dSigns').value,
-                    expertNotes: $('dExpertNotes').value,
-                    possibleCauses: $('dPossibleCauses').value,
-                    tests: $('dTests').value,
-                    actualCause: $('dActualCause').value,
-                    solutionPlan: $('dSolutionPlan').value
-                };
-
-                google.script.run.withSuccessHandler(function () {
-                    hideLoading();
-                    toast('Diagnose saved successfully!');
-                    markClean();
-                    closeDiagnoseModal();
-                    btn.disabled = false;
-                }).withFailureHandler(function (err) {
-                    hideLoading();
-                    toast('Error saving diagnose: ' + err.message);
-                    btn.disabled = false;
-                }).submitDiagnose(formData);
-            });
-
-            // Star rating logic (Generic for all star groups)
-            document.querySelectorAll('.score-stars').forEach(container => {
-                const stars = container.querySelectorAll('.star');
-                const fieldId = container.getAttribute('data-field') || (container.id === 'starRating' ? 'fScore' : (container.id === 'efStarRating' ? 'efScore' : null));
-                if (!fieldId) return;
-
-                stars.forEach(s => {
-                    s.addEventListener('click', function (e) {
-                        e.stopPropagation();
-                        const val = parseInt(this.getAttribute('data-value'));
-                        const input = $(fieldId);
-                        if (input) input.value = val.toFixed(1);
-
-                        const scoreValGroup = container.querySelector('.score-value');
-                        if (scoreValGroup) scoreValGroup.textContent = val.toFixed(1);
-
-                        stars.forEach(x => {
-                            if (parseInt(x.getAttribute('data-value')) <= val) x.classList.add('active');
-                            else x.classList.remove('active');
-                        });
-                        markDirty();
-                    });
-                });
-            });
 
             // Feedback form logic
             $('fCompanyName').addEventListener('focus', function () { renderCompanySearchResults(this.value); });
             $('fCompanyName').addEventListener('input', function () { renderCompanySearchResults(this.value); });
             document.addEventListener('click', function (e) { if (!e.target.closest('.search-select')) $('companyResults').style.display = 'none'; });
 
-            $('feedbackForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                const btn = $('fSubmitBtn');
-                btn.disabled = true;
-                showLoading('Submitting feedback...');
 
-                const formData = {
-                    mentorName: $('fMentorName').value,
-                    companyName: $('fCompanyName').value,
-                    dayOfSession: $('fDay').value,
-                    currentStatus: $('fStatus').value,
-                    achievements: $('fAchievements').value,
-                    actionSteps: $('fActionSteps').value,
-                    prodScore: $('fProdScore').value,
-                    opsScore: $('fOpsScore').value,
-                    salesScore: $('fSalesScore').value,
-                    mktScore: $('fMktScore').value,
-                    finScore: $('fFinScore').value,
-                    mentorScore: $('fScore').value,
-                    roundName: (currentRound || 'R_01').replace('R_', 'Round_')
-                };
-
-                if (!formData.companyName) {
-                    hideLoading();
-                    toast('Please select a company');
-                    btn.disabled = false;
-                    return;
-                }
-
-                if (!formData.dayOfSession) {
-                    hideLoading();
-                    btn.disabled = false;
-                    const dayEl = $('fDay').closest('.select-wrapper');
-                    dayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    dayEl.classList.add('error-glow');
-                    toast((document.documentElement.getAttribute('lang') || 'ar') === 'ar' ? 'يرجى اختيار يوم الجلسة' : 'Please select the session day');
-                    return;
-                }
-
-                google.script.run.withSuccessHandler(function () {
-                    hideLoading();
-                    toast('Feedback submitted successfully!');
-                    markClean();
-                    closeFeedbackModal();
-                    loadAllData(false); // Refresh list
-                    btn.disabled = false;
-                }).withFailureHandler(function (err) {
-                    hideLoading();
-                    toast('Error: ' + (err.message || 'Submission failed'));
-                    btn.disabled = false;
-                }).submitFeedback(formData);
-            });
 
             // No custom mentor results logic needed for select element
 
@@ -4588,41 +4480,7 @@
                 renderFollowUp();
             });
 
-            $('editFollowupForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                const btn = $('efSubmitBtn');
-                btn.disabled = true;
-                showLoading('Saving changes...');
 
-                const params = {
-                    roundId: currentRound,
-                    companyName: $('efCompany').value,
-                    sessionNum: parseInt($('efSessionNum').value),
-                    status: $('efStatus').value,
-                    achievements: $('efAchievements').value,
-                    actions: $('efActions').value,
-                    prodScore: $('efProdScore').value,
-                    opsScore: $('efOpsScore').value,
-                    salesScore: $('efSalesScore').value,
-                    mktScore: $('efMktScore').value,
-                    finScore: $('efFinScore').value,
-                    score: $('efScore').value
-                };
-
-                google.script.run.withSuccessHandler(function () {
-                    hideLoading();
-                    toast('Changes saved successfully!');
-                    markClean();
-                    closeEditFollowupModal();
-                    followUpData = []; // Force reload
-                    loadFollowUpLazy();
-                    btn.disabled = false;
-                }).withFailureHandler(function (err) {
-                    hideLoading();
-                    toast('Error: ' + err.message);
-                    btn.disabled = false;
-                }).updateFollowupSession(params.roundId, params.companyName, params.sessionNum, params.status, params.achievements, params.actions, params.prodScore, params.opsScore, params.salesScore, params.mktScore, params.finScore, params.score);
-            });
 
             // Star rating for Edit
             const efStars = document.querySelectorAll('.ef-star');
@@ -4655,67 +4513,35 @@
                     );
 
                     if (isSubmitted) {
-                        $('fStatus').value = session.status || '';
-                        $('fAchievements').value = session.achievements || '';
-                        $('fActionSteps').value = session.actions || '';
-
-                        const score = parseFloat(session.score || 0);
-                        $('fScore').value = score.toFixed(1);
-                        $('fScoreValue').textContent = score.toFixed(1);
-                        document.querySelectorAll('#starRating .star').forEach(s => {
-                            if (parseInt(s.getAttribute('data-value')) <= score) s.classList.add('active');
-                            else s.classList.remove('active');
-                        });
-
-                        // Populating new evaluations for day switch
-                        const fields = [
-                            { id: 'fProdScore', val: session.prodScore },
-                            { id: 'fOpsScore', val: session.opsScore },
-                            { id: 'fSalesScore', val: session.salesScore },
-                            { id: 'fMktScore', val: session.mktScore },
-                            { id: 'fFinScore', val: session.finScore }
-                        ];
-                        fields.forEach(f => {
-                            const v = parseFloat(f.val || 0);
-                            $(f.id).value = v.toFixed(1);
-                            const container = $(f.id).parentElement.querySelector('.score-stars');
-                            if (container) {
-                                container.querySelectorAll('.star').forEach(s => {
-                                    if (parseInt(s.getAttribute('data-value')) <= v) s.classList.add('active');
-                                    else s.classList.remove('active');
-                                });
-                                const valEl = container.querySelector('.score-value');
-                                if (valEl) valEl.textContent = v.toFixed(1);
+                        // Dynamically populate fields from session data
+                        currentQuestions.forEach(q => {
+                            const val = session[q.id];
+                            if (val !== undefined) {
+                                if (q.type === 'rating') {
+                                    setRatingValue(q.id, val || 0);
+                                } else {
+                                    const el = $(q.id);
+                                    if (el) el.value = val || '';
+                                }
                             }
                         });
 
-                        lastLoadedDay = this.value; // Track that we loaded this day
+                        lastLoadedDay = this.value;
                         $('fSubmitBtn').textContent = i18n[lang].btn_save_changes;
                     } else {
-                        // NEW behavior: Only reset if we were previously viewing a loaded day
                         if (lastLoadedDay !== null) {
-                            ['fStatus', 'fAchievements', 'fActionSteps'].forEach(id => $(id).value = '');
-                            $('fScore').value = '0.0';
-                            $('fScoreValue').textContent = '0.0';
-                            document.querySelectorAll('#starRating .star').forEach(s => s.classList.remove('active'));
-
-                            // Reset new stars
-                            ['fProdScore', 'fOpsScore', 'fSalesScore', 'fMktScore', 'fFinScore'].forEach(id => {
-                                $(id).value = '0.0';
-                                const container = $(id).parentElement.querySelector('.score-stars');
-                                if (container) {
-                                    container.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
-                                    const valEl = container.querySelector('.score-value');
-                                    if (valEl) valEl.textContent = '0.0';
+                            currentQuestions.forEach(q => {
+                                if (q.type === 'rating') {
+                                    setRatingValue(q.id, 0);
+                                } else {
+                                    const el = $(q.id);
+                                    if (el) el.value = '';
                                 }
                             });
                         }
                         lastLoadedDay = null;
                         $('fSubmitBtn').textContent = i18n[lang].btn_submit;
                     }
-
-                    // Update counters
-                    ['fStatus', 'fAchievements', 'fActionSteps'].forEach(id => updateCharCount($(id)));
                 }
             });
 
