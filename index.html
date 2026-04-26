@@ -3054,6 +3054,7 @@
                 .replace(/ى/g, "ي")
                 .toLowerCase();
         };
+
         const i18n = {
             en: {
                 brand: "Mentor Portal", tab_info: "Info", tab_feedbacks: "Feedbacks", signin_title: "Sign In",
@@ -3179,7 +3180,7 @@
             $('fMentorNameDisplay').textContent = name;
             $('fRound').value = (currentRound || 'R_01').replace('R_', 'Round ');
 
-            if (presetCompany) {
+            if (presetCompany && typeof presetCompany === 'string') {
                 $('fCompanyName').value = presetCompany;
             }
 
@@ -3218,7 +3219,7 @@
                 }
             });
 
-            loadCompaniesForForm();
+
         };
 
         const refreshFDayOptions = (companyName) => {
