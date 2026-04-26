@@ -3604,7 +3604,9 @@
                     <td>Column ${q.column}</td>
                     <td style="text-align:center">${q.order}</td>
                     <td style="text-align:center">
-                        <span class="badge ${q.visible ? 'success' : ''}">${q.visible ? 'نعم' : 'لا'}</span>
+                        <button class="badge ${q.visible ? 'success' : ''}" style="cursor:pointer; border:none" onclick="toggleVisibilityByIndex(${idx})">
+                            ${q.visible ? 'نعم' : 'لا'}
+                        </button>
                     </td>
                     <td style="text-align:center">
                         <div style="display:flex; gap:8px; justify-content:center">
@@ -3638,17 +3640,22 @@
             const q = currentQuestions[idx];
             $('questionModalTitle').textContent = 'تعديل سؤال';
             $('qId').value = q.id;
-            $('qFormType').value = q.formType;
+            $('qFormType').value = q.formType || currentQuestionType;
             $('qLabel').value = q.label;
             $('qDescription').value = q.description || '';
             $('qType').value = q.type;
             $('qOrder').value = q.order;
             $('qColumn').value = q.column;
-            $('qVisible').checked = q.visible === true;
+            $('qVisible').checked = (q.visible === true || q.visible === "TRUE");
             $('qOptions').value = q.options ? q.options.join(', ') : '';
 
             toggleOptionsGroup(q.type);
             $('questionModal').style.display = 'flex';
+        };
+
+        const toggleVisibilityByIndex = (idx) => {
+            currentQuestions[idx].visible = !currentQuestions[idx].visible;
+            saveQuestionsBatch();
         };
 
         const deleteQuestionByIndex = (idx) => {
@@ -3697,7 +3704,7 @@
                 hideLoading();
                 toast('تم الحفظ بنجاح');
                 loadQuestions(currentQuestionType);
-            }).saveQuestionsConfig(currentQuestions);
+            }).saveQuestionsConfig(currentQuestions, currentQuestionType);
         };
 
         const openEditFollowupModal = (company, sessionNum, status, achievements, actions, score) => {
