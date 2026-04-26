@@ -3454,6 +3454,9 @@
                         markDirty();
                     };
                 });
+            }).withFailureHandler(function (err) {
+                container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger)">Error loading questions: ${err.message || err}</div>`;
+                toast('Error loading questions: ' + (err.message || err));
             }).getFormQuestions(type);
         };
 
@@ -3504,7 +3507,7 @@
                 toast('تم الحفظ بنجاح');
                 if (cb) cb();
                 loadAdminQuestions();
-            }).saveFormQuestionSettings(currentAdminQuestionType, [q]);
+            }).withFailureHandler(err => { hideLoading(); toast(err.message); }).saveFormQuestionSettings(currentAdminQuestionType, [q]);
         };
 
         const openAddQuestionModal = () => {
@@ -3524,7 +3527,7 @@
                 toast('تمت إضافة السؤال بنجاح');
                 $('addQuestionModal').style.display = 'none';
                 loadAdminQuestions();
-            }).addQuestionColumn(currentAdminQuestionType, header, type);
+            }).withFailureHandler(err => { hideLoading(); toast(err.message); }).addQuestionColumn(currentAdminQuestionType, header, type);
         };
 
         const deleteQuestion = (header) => {
@@ -3535,7 +3538,7 @@
                 hideLoading();
                 toast('تم الحذف بنجاح');
                 loadAdminQuestions();
-            }).deleteQuestionColumn(currentAdminQuestionType, header);
+            }).withFailureHandler(err => { hideLoading(); toast(err.message); }).deleteQuestionColumn(currentAdminQuestionType, header);
         };
 
         const loadAdminStats = () => {
@@ -3963,7 +3966,7 @@
                         ${r.label}
                     </div>
                 `).join('');
-            }).getRounds(false);
+            }).withFailureHandler(err => toast('Error loading rounds: ' + err.message)).getRounds(false);
         }
 
         function selectRoundCard(id, el) {
@@ -3992,7 +3995,7 @@
                         ${name}
                     </div>
                 `).join('');
-            }).getMentors(id);
+            }).withFailureHandler(err => toast('Error loading mentors: ' + err.message)).getMentors(id);
         }
 
         function selectMentorCard(name, el) {
@@ -4014,10 +4017,7 @@
                 hideLoading();
                 $('mentorPinModal').style.display = 'none';
                 toast('تم تحديث رمز الدخول بنجاح');
-            }).withFailureHandler(function (err) {
-                hideLoading();
-                toast(err.message);
-            }).updateMentorPin(currentMentor, pin);
+            }).withFailureHandler(err => { hideLoading(); toast('Error updating pin: ' + err.message); }).updateMentorPin(currentMentor, pin);
         };
 
         function renderCompanySearchResults(search) {
