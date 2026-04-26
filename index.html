@@ -3718,7 +3718,7 @@
             }).saveQuestionsConfig(currentQuestions, currentQuestionType);
         };
 
-        const openEditFollowupModal = (company, sessionNum, status, achievements, actions, score) => {
+        const openEditFollowupModal = (company, sessionNum) => {
             $('efCompany').value = company;
             $('efSessionNum').value = sessionNum;
 
@@ -3726,42 +3726,27 @@
             renderDynamicFields('dynamicEditFields', 'feedback', () => {
                 hideLoading();
 
-                // Map legacy params to the new dynamic fields
-                // Note: The caller passes status, achievements, actions, etc.
-                // We'll try to find fields with those IDs or matching labels
-                const fields = {
-                    'currentStatus': status,
-                    'achievements': achievements,
-                    'actionSteps': actions,
-                    'mentorScore': score
-                };
-
-                // Also get extra fields from followUpData if available
+                // Find data in local followUpData
                 const currentItem = followUpData.find(c => c.company.toLowerCase() === company.toLowerCase());
-                const currentSession = currentItem ? currentItem.sessions.find(s => s.num === sessionNum) : null;
+                const session = currentItem ? currentItem.sessions.find(s => s.num === sessionNum) : null;
 
-                if (currentSession) {
-                    Object.assign(fields, {
-                        'prodScore': currentSession.prodScore,
-                        'opsScore': currentSession.opsScore,
-                        'salesScore': currentSession.salesScore,
-                        'mktScore': currentSession.mktScore,
-                        'finScore': currentSession.finScore
+                if (session) {
+                    currentQuestions.forEach(q => {
+                        const val = session[q.id];
+                        if (val !== undefined) {
+                            if (q.type === 'rating') {
+                                setRatingValue(q.id, val || 0);
+                            } else {
+                                const el = $(q.id);
+                                if (el) el.value = val || '';
+                            }
+                        }
+                        if (q.type === 'text') {
+                            const el = $(q.id);
+                            if (el) updateCharCount(el);
+                        }
                     });
                 }
-
-                currentQuestions.forEach(q => {
-                    const val = fields[q.id];
-                    if (val !== undefined) {
-                        if (q.type === 'rating') {
-                            setRatingValue(q.id, val || 0);
-                        } else {
-                            const el = $(q.id);
-                            if (el) el.value = val || '';
-                        }
-                    }
-                    if (q.type === 'text') updateCharCount($(q.id));
-                });
 
                 $('editFollowupModal').style.display = 'flex';
                 document.body.style.overflow = 'hidden';
@@ -4110,7 +4095,8 @@
             e.preventDefault();
             const formData = {
                 company: $('efCompany').value,
-                sessionNum: $('efSessionNum').value
+                sessionNum: $('efSessionNum').value,
+                roundName: currentRound // Use currentRound globally
             };
 
             // Add dynamic fields
@@ -4268,7 +4254,7 @@
                            ${s.file ? (lang === 'ar' ? '📎 عرض الملف المرفق' : '📎 View Uploaded File') : (lang === 'ar' ? '(لا يوجد ملفات)' : '(No Uploaded Files)')}
                          </a>
                          ${isOwner ? `
-                           <button class="btn" style="min-height:44px; padding:6px 20px; font-size:14px; border-radius:12px; background: rgba(79, 70, 229, 0.1); border: 1px solid var(--accent); white-space:nowrap;" onclick="event.stopPropagation(); openEditFollowupModal('${item.company.replace(/'/g, "\\'")}', ${s.num}, \`${(s.status || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, \`${(s.achievements || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, \`${(s.actions || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, '${s.score}')">
+                           <button class="btn" style="min-height:44px; padding:6px 20px; font-size:14px; border-radius:12px; background: rgba(79, 70, 229, 0.1); border: 1px solid var(--accent); white-space:nowrap;" onclick="event.stopPropagation(); openEditFollowupModal('${item.company.replace(/'/g, "\\'")}', ${s.num})">
                              ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
                            </button>
                          ` : '<span class="tag" style="font-size: 11px; padding: 6px 12px; opacity: 0.6; background: rgba(0,0,0,0.05); border-radius:8px;">Read Only</span>'}
