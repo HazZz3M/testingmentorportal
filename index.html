@@ -3186,19 +3186,11 @@
 
             renderCompanySearchResults('');
 
-            // Reset stars
-            document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
-            $('fScoreValue').textContent = '0.0';
-            $('fScore').value = '0.0';
-            ['fProdScore', 'fOpsScore', 'fSalesScore', 'fMktScore', 'fFinScore'].forEach(id => {
-                $(id).value = '0.0';
-                const container = $(id).parentElement.querySelector('.score-stars');
-                if (container) {
-                    container.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
-                    const valEl = container.querySelector('.score-value');
-                    if (valEl) valEl.textContent = '0.0';
-                }
-            });
+            // Star ratings and other fields are now dynamic
+
+            // Dynamic fields will be reset when renderDynamicFields is called
+            // as it clears the container first.
+
 
             // Reset counters
             document.querySelectorAll('.char-counter .count').forEach(c => c.textContent = '0');
