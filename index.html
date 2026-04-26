@@ -2502,7 +2502,7 @@
                 <div class="nav-tabs" style="display: flex; margin-bottom: 24px;">
                     <div class="tab active" onclick="switchAdminTab('stats', this)">الإحصائيات</div>
                     <div class="tab" onclick="switchAdminTab('management', this)">إدارة الموجهين والدورات</div>
-                    <div class="tab" onclick="switchAdminTab('questions', this)">إدارة أسئلة النماذج</div>
+                    <div class="tab" onclick="switchAdminTab('questions', this)">إدارة الأسئلة</div>
                     <div class="tab" onclick="switchAdminTab('settings', this)">إعدادات الربط</div>
                 </div>
 
@@ -2568,6 +2568,35 @@
                     </div>
                 </div>
 
+                <div id="adminQuestionsView" style="display:none">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div class="nav-tabs" style="display: flex; margin-bottom: 0;">
+                            <div class="tab active" onclick="switchQuestionType('feedback', this)">نموذج التقرير</div>
+                            <div class="tab" onclick="switchQuestionType('diagnose', this)">نموذج التشخيص</div>
+                        </div>
+                        <button class="btn" onclick="openAddQuestionModal()">إضافة سؤال جديد</button>
+                    </div>
+
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>السؤال</th>
+                                    <th>النوع</th>
+                                    <th>العمود</th>
+                                    <th style="text-align:center">الترتيب</th>
+                                    <th style="text-align:center">عرض</th>
+                                    <th style="text-align:center">الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminQuestionsTable">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div id="adminSettingsView" style="display:none">
                     <div class="settings-lock" id="settingsLock">
                         <div style="font-weight: 800; color: var(--danger)">منطقة محمية</div>
@@ -2594,35 +2623,6 @@
                             <a href="#" id="linkDiag" target="_blank" class="admin-action-btn">فتح جدول
                                 التشخيص</a>
                         </div>
-                    </div>
-                </div>
-
-                <!-- New Questions Management View -->
-                <div id="adminQuestionsView" style="display:none">
-                    <div class="row" style="margin-bottom:20px; align-items: center; justify-content: space-between;">
-                        <div
-                            style="display:flex; gap:12px; background: var(--card-2); padding: 4px; border-radius: 12px;">
-                            <button class="tab active" id="btnAdminQuestionsFeedback"
-                                onclick="switchQuestionType('feedback')">أسئلة التقارير</button>
-                            <button class="tab" id="btnAdminQuestionsDiagnose"
-                                onclick="switchQuestionType('diagnose')">أسئلة التشخيص</button>
-                        </div>
-                        <button class="btn" onclick="openAddQuestionModal()">إضافة سؤال جديد +</button>
-                    </div>
-
-                    <div class="admin-table-container">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>السؤال (العمود)</th>
-                                    <th>نص السؤال</th>
-                                    <th>نوع السؤال</th>
-                                    <th style="text-align:center">إظهار</th>
-                                    <th style="text-align:center">إجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminQuestionsTable"></tbody>
-                        </table>
                     </div>
                 </div>
             </div>
@@ -2663,68 +2663,6 @@
         </div>
     </div>
     <div class="toast" id="toast"></div>
-
-    <!-- Add Question Modal -->
-    <div class="modal" id="addQuestionModal">
-        <div class="modal-content" style="max-width: 450px">
-            <div class="modal-header">
-                <div class="modal-title">إضافة سؤال جديد</div>
-                <button class="modal-close" onclick="$('addQuestionModal').style.display='none'">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>عنوان السؤال (العمود في الجدول)</label>
-                    <input type="text" id="newQHeader" placeholder="مثلاً: ملاحظات إضافية">
-                </div>
-                <div class="form-group">
-                    <label>نوع السؤال</label>
-                    <div class="select-wrapper">
-                        <select id="newQType">
-                            <option value="textarea">نص طويل (Textarea)</option>
-                            <option value="star">تقييم بالنجوم (Stars)</option>
-                            <option value="input">نص قصير (Input)</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="font-size:12px; color:var(--muted); margin-top: -10px; margin-bottom: 20px;">
-                    سيتم إضافة عمود جديد في الجدول قبل عمود "Round Name"
-                </div>
-                <button class="btn" onclick="submitAddQuestion()">إضافة السؤال</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Question Modal -->
-    <div class="modal" id="editQuestionModal">
-        <div class="modal-content" style="max-width: 500px">
-            <div class="modal-header">
-                <div class="modal-title">تعديل السؤال</div>
-                <button class="modal-close" onclick="$('editQuestionModal').style.display='none'">×</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="editQHeader">
-                <div class="form-group">
-                    <label>نص السؤال (يظهر للمستخدم)</label>
-                    <input type="text" id="editQLabel">
-                </div>
-                <div class="form-group">
-                    <label>وصف السؤال</label>
-                    <textarea id="editQDesc" style="min-height: 80px;"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>نوع السؤال</label>
-                    <div class="select-wrapper">
-                        <select id="editQType">
-                            <option value="textarea">نص طويل (Textarea)</option>
-                            <option value="star">تقييم بالنجوم (Stars)</option>
-                            <option value="input">نص قصير (Input)</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn" onclick="submitEditQuestion()">حفظ التعديلات</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Feedback Form Modal -->
     <div class="modal" id="feedbackModal">
@@ -2785,35 +2723,18 @@
                         </div>
                     </div>
 
-                    <div id="feedbackDynamicFields">
-                        <div style="text-align:center; padding:20px; color:var(--muted)">Loading questions...</div>
+                    <div id="dynamicFeedbackFields">
+                        <!-- Dynamic fields injected here -->
                     </div>
-                    <div class="col"></div>
+                </form>
             </div>
-
-            <div class="form-group" style="margin-bottom: 8px;">
-                <label data-i18n="label_mentor_score">Mentor Score (0 - 5)</label>
-                <div class="q-desc" data-i18n="desc_mentor_score">ايه هو تقييمك للشركه بشكل عام (حيث 5 هو الاعلي
-                    تقييما)</div>
-                <div class="score-stars" id="starRating">
-                    <span class="star" data-value="1">★</span>
-                    <span class="star" data-value="2">★</span>
-                    <span class="star" data-value="3">★</span>
-                    <span class="star" data-value="4">★</span>
-                    <span class="star" data-value="5">★</span>
-                    <div class="score-value" id="fScoreValue">0.0</div>
-                </div>
-                <input type="hidden" id="fScore" value="0.0">
+            <div class="modal-footer">
+                <button type="button" class="btn secondary" onclick="closeFeedbackModal()"
+                    data-i18n="btn_cancel">Cancel</button>
+                <button type="submit" form="feedbackForm" class="btn" id="fSubmitBtn" data-i18n="btn_submit">Submit
+                    Feedback</button>
             </div>
-            </form>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn secondary" onclick="closeFeedbackModal()"
-                data-i18n="btn_cancel">Cancel</button>
-            <button type="submit" form="feedbackForm" class="btn" id="fSubmitBtn" data-i18n="btn_submit">Submit
-                Feedback</button>
-        </div>
-    </div>
     </div>
 
     <!-- Edit Followup Modal -->
@@ -2828,33 +2749,8 @@
                     <input type="hidden" id="efCompany">
                     <input type="hidden" id="efSessionNum">
 
-                    <div class="form-group">
-                        <label for="efStatus" data-i18n="label_status">Current Status</label>
-                        <div class="q-desc" data-i18n="desc_status">يرجى توضيح المرحلة التي وصلت إليها الشركة حاليًا وأي
-                            جوانب تحتاج إلى دعم أو تطوير</div>
-                        <textarea id="efStatus" dir="auto" maxlength="1000" oninput="updateCharCount(this)"></textarea>
-                        <div class="char-counter"><span class="count">0</span> / 1000</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="efAchievements" data-i18n="label_achievements">Achievements Since The Last
-                            Session</label>
-                        <div class="q-desc" data-i18n="desc_achievements">يرجى توضيح الخطوات أو المهام التي تم الاتفاق
-                            عليها في الجلسة السابقة...</div>
-                        <textarea id="efAchievements" dir="auto" maxlength="1000"
-                            oninput="updateCharCount(this)"></textarea>
-                        <div class="char-counter"><span class="count">0</span> / 1000</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="efActions" data-i18n="label_action_steps">Action Steps To Be Completed Before The
-                            Next Session</label>
-                        <textarea id="efActions" dir="auto" maxlength="1000" oninput="updateCharCount(this)"></textarea>
-                        <div class="char-counter"><span class="count">0</span> / 1000</div>
-                    </div>
-
-                    <div id="editFollowupDynamicFields">
-                        <div style="text-align:center; padding:20px; color:var(--muted)">Loading questions...</div>
+                    <div id="dynamicEditFields">
+                        <!-- Dynamic fields injected here -->
                     </div>
                 </form>
             </div>
@@ -2925,16 +2821,16 @@
                         </div>
                     </div>
 
-                    <textarea id="dSolutionPlan" dir="auto" placeholder="Enter solution plan..."
-                        data-i18n-placeholder="placeholder_solution_plan"></textarea>
+                    <div id="dynamicDiagnoseFields">
+                        <!-- Dynamic fields injected here -->
+                    </div>
+                </form>
             </div>
-            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn secondary" onclick="closeDiagnoseModal()">Cancel</button>
+                <button type="submit" form="diagnoseForm" class="btn" id="dSubmitBtn">Save Diagnose</button>
+            </div>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn secondary" onclick="closeDiagnoseModal()">Cancel</button>
-            <button type="submit" form="diagnoseForm" class="btn" id="dSubmitBtn">Save Diagnose</button>
-        </div>
-    </div>
     </div>
 
     <!-- Session Modal -->
@@ -2987,6 +2883,76 @@
                 </div>
                 <button class="btn" style="width: 100%; margin-top: 16px" onclick="handleAdminLogin()">تسجيل
                     الدخول</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="questionModal">
+        <div class="modal-content" style="max-width: 500px">
+            <div class="modal-header">
+                <div class="modal-title" id="questionModalTitle">إضافة / تعديل سؤال</div>
+                <button class="modal-close" onclick="$('questionModal').style.display='none'">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="questionForm">
+                    <input type="hidden" id="qId">
+                    <input type="hidden" id="qFormType">
+
+                    <div class="form-group">
+                        <label>نص السؤال</label>
+                        <input type="text" id="qLabel" placeholder="أدخل نص السؤال" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>وصف السؤال (اختياري)</label>
+                        <textarea id="qDescription" placeholder="أدخل وصفاً توضيحياً للسؤال"
+                            style="min-height: 80px"></textarea>
+                    </div>
+
+                    <div class="row" style="gap: 12px; margin-bottom: 24px;">
+                        <div class="col">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>نوع السؤال</label>
+                                <div class="select-wrapper">
+                                    <select id="qType">
+                                        <option value="text">نص (Text)</option>
+                                        <option value="rating">تقييم نجوم (Rating)</option>
+                                        <option value="select">قائمة منسدلة (Select)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>الترتيب</label>
+                                <input type="number" id="qOrder" value="1" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>العمود المرتبط في الجدول</label>
+                        <div class="select-wrapper">
+                            <select id="qColumn">
+                                <!-- Populated by JS headers -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="qOptionsGroup" class="form-group" style="display: none;">
+                        <label>خيارات القائمة المنسدلة (مفصولة بفاصلة)</label>
+                        <input type="text" id="qOptions" placeholder="مثلاً: خيار 1, خيار 2, خيار 3">
+                    </div>
+
+                    <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="qVisible" checked style="width: auto;">
+                        <label for="qVisible" style="margin-bottom: 0;">إظهار السؤال في النموذج</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="$('questionModal').style.display='none'">إلغاء</button>
+                <button class="btn" onclick="saveQuestionUI()">حفظ السؤال</button>
             </div>
         </div>
     </div>
@@ -3202,20 +3168,39 @@
 
             renderCompanySearchResults('');
 
-            // Render Dynamic Fields
-            renderDynamicFormFields('feedback', 'feedbackDynamicFields');
+            // Reset stars
+            document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+            $('fScoreValue').textContent = '0.0';
+            $('fScore').value = '0.0';
+            ['fProdScore', 'fOpsScore', 'fSalesScore', 'fMktScore', 'fFinScore'].forEach(id => {
+                $(id).value = '0.0';
+                const container = $(id).parentElement.querySelector('.score-stars');
+                if (container) {
+                    container.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+                    const valEl = container.querySelector('.score-value');
+                    if (valEl) valEl.textContent = '0.0';
+                }
+            });
+
+            // Reset counters
+            document.querySelectorAll('.char-counter .count').forEach(c => c.textContent = '0');
 
             $('fSubmitBtn').textContent = i18n[document.documentElement.getAttribute('lang') || 'ar'].btn_submit;
 
             $('feedbackModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
-            markClean();
+            markClean(); // Reset dirty flag on open
             lastLoadedDay = null;
-            if (followUpData.length === 0) {
-                loadFollowUpLazy(() => refreshFDayOptions(presetCompany || ''));
-            } else {
-                refreshFDayOptions(presetCompany || '');
-            }
+
+            // Render dynamic fields
+            renderDynamicFields('dynamicFeedbackFields', 'feedback', () => {
+                if (followUpData.length === 0) {
+                    loadFollowUpLazy(() => refreshFDayOptions(presetCompany || ''));
+                } else {
+                    refreshFDayOptions(presetCompany || '');
+                }
+            });
+
             loadCompaniesForForm();
         };
 
@@ -3276,39 +3261,47 @@
             $('dMentorNameDisplay').textContent = name;
             $('dCompanyName').value = company;
             $('dLocation').value = 'اسيوط'; // Reset to default
-            $('dCompanyNameDisplay').textContent = company;
-            $('dRoundName').value = (currentRound || 'Round_01').replace('R_', 'Round ');
 
-            // Render Dynamic Fields
-            renderDynamicFormFields('diagnose', 'diagnoseDynamicFields');
+            // Auto-calculate age from startV raw data
+            const startStr = $('startV').getAttribute('data-raw');
+            if (startStr && startStr !== '—') {
+                $('dCompanyAge').value = calculateAge(startStr);
+            }
 
-            showLoading('Checking existing diagnosis...');
+            showLoading('Checking existing diagnose...');
             google.script.run.withSuccessHandler(function (data) {
                 hideLoading();
-                if (data) {
-                    // Populate dynamic data if exists
-                    const fields = document.getElementById('diagnoseDynamicFields').querySelectorAll('[data-header]');
-                    fields.forEach(f => {
-                        const h = f.getAttribute('data-header');
-                        if (data[h] !== undefined) {
-                            if (f.tagName === 'TEXTAREA' || f.tagName === 'INPUT') f.value = data[h];
-                            else if (f.type === 'hidden') {
-                                // Star rating
-                                f.value = data[h];
-                                const container = f.parentElement.querySelector('.score-stars');
-                                if (container) {
-                                    updateStarsUI(container, parseFloat(data[h]));
+
+                renderDynamicFields('dynamicDiagnoseFields', 'diagnose', () => {
+                    // Populate from existing data if found
+                    if (data) {
+                        currentQuestions.forEach(q => {
+                            const el = $(q.id);
+                            if (el) {
+                                if (q.type === 'rating') {
+                                    setRatingValue(q.id, data[q.id] || 0);
+                                } else {
+                                    el.value = data[q.id] || '';
                                 }
                             }
-                        }
-                    });
+                        });
 
-                    if (data["Mentor Score"]) {
-                        $('dScore').value = data["Mentor Score"];
-                        updateStarsUI(document.querySelector('.d-stars'), parseFloat(data["Mentor Score"]));
+                        if (data.companyCombined) {
+                            const parts = data.companyCombined.split(' \\ ');
+                            if (parts.length >= 4) {
+                                $('dCompanyAge').value = parts[1].trim();
+                                $('dLocation').value = parts[2].trim();
+                                $('dTeamSize').value = parts[3].trim();
+                            }
+                        }
                     }
-                }
-                $('diagnoseModal').style.display = 'flex';
+
+                    $('diagnoseModal').style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                });
+            }).withFailureHandler(function (err) {
+                hideLoading();
+                toast('Error checking existing data: ' + err.message);
                 document.body.style.overflow = 'hidden';
             }).getDiagnoseData(company);
         };
@@ -3354,191 +3347,8 @@
             $('adminSettingsView').style.display = tab === 'settings' ? 'block' : 'none';
 
             if (tab === 'questions') {
-                loadAdminQuestions();
+                loadQuestions(currentQuestionType || 'feedback');
             }
-        };
-
-        var currentAdminQuestionType = 'feedback';
-        var adminQuestionsBuffer = [];
-
-        const switchQuestionType = (type) => {
-            currentAdminQuestionType = type;
-            $('btnAdminQuestionsFeedback').classList.toggle('active', type === 'feedback');
-            $('btnAdminQuestionsDiagnose').classList.toggle('active', type === 'diagnose');
-            loadAdminQuestions();
-        };
-
-        const loadAdminQuestions = () => {
-            showLoading('تحميل الأسئلة...');
-            google.script.run.withSuccessHandler(function (questions) {
-                hideLoading();
-                adminQuestionsBuffer = questions;
-                renderAdminQuestions(questions);
-            }).getFormQuestions(currentAdminQuestionType);
-        };
-
-        const renderAdminQuestions = (questions) => {
-            const tbody = $('adminQuestionsTable');
-            tbody.innerHTML = questions.map(q => `
-                <tr>
-                    <td><div style="font-weight:700; font-family:monospace; font-size:12px;">${q.header}</div></td>
-                    <td>
-                        <div style="font-weight:600">${q.label}</div>
-                        <div style="font-size:11px; color:var(--muted)">${q.description || 'لا يوجد وصف'}</div>
-                    </td>
-                    <td><div class="badge secondary">${q.type}</div></td>
-                    <td style="text-align:center">
-                        <label class="switch">
-                            <input type="checkbox" ${!q.hidden ? 'checked' : ''} onchange="toggleQuestionVisibility('${q.header.replace(/'/g, "\\'")}', this.checked)">
-                            <span class="slider"></span>
-                        </label>
-                    </td>
-                    <td style="text-align:center">
-                        <div style="display:flex; gap:8px; justify-content:center;">
-                            <button class="admin-action-btn" onclick="openEditQuestionModal('${q.header.replace(/'/g, "\\'")}')">تعديل</button>
-                            <button class="admin-action-btn" style="color:var(--danger); border-color:rgba(239, 68, 68, 0.2)" onclick="deleteQuestion('${q.header.replace(/'/g, "\\'")}')">حذف</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        };
-
-        const renderDynamicFormFields = (type, containerId) => {
-            const container = $(containerId);
-            container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted)">Loading questions...</div>';
-
-            google.script.run.withSuccessHandler(function (questions) {
-                container.innerHTML = '';
-                questions.filter(q => !q.hidden).forEach(q => {
-                    const group = document.createElement('div');
-                    group.className = 'form-group';
-
-                    let inputHtml = '';
-                    if (q.type === 'star') {
-                        inputHtml = `
-                            <div class="score-stars dynamic-stars" data-field="${q.header}">
-                                <span class="star" data-value="1">★</span>
-                                <span class="star" data-value="2">★</span>
-                                <span class="star" data-value="3">★</span>
-                                <span class="star" data-value="4">★</span>
-                                <span class="star" data-value="5">★</span>
-                                <div class="score-value">0.0</div>
-                            </div>
-                            <input type="hidden" data-header="${q.header}" value="0.0">
-                        `;
-                    } else if (q.type === 'input') {
-                        inputHtml = `<input type="text" data-header="${q.header}" dir="auto" placeholder="${q.label}...">`;
-                    } else {
-                        inputHtml = `
-                            <textarea data-header="${q.header}" dir="auto" maxlength="1000" oninput="updateCharCount(this)" placeholder="${q.label}..."></textarea>
-                            <div class="char-counter"><span class="count">0</span> / 1000</div>
-                        `;
-                    }
-
-                    group.innerHTML = `
-                        <label>${q.label}</label>
-                        ${q.description ? `<div class="q-desc">${q.description}</div>` : ''}
-                        ${inputHtml}
-                    `;
-                    container.appendChild(group);
-                });
-
-                // Re-bind star clicks for dynamic fields
-                container.querySelectorAll('.dynamic-stars .star').forEach(star => {
-                    star.onclick = function () {
-                        const val = parseFloat(this.getAttribute('data-value'));
-                        const parent = this.parentElement;
-                        updateStarsUI(parent, val);
-                        const input = parent.parentElement.querySelector('input[type="hidden"]');
-                        if (input) input.value = val.toFixed(1);
-                        markDirty();
-                    };
-                });
-            }).withFailureHandler(function (err) {
-                container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger)">Error loading questions: ${err.message || err}</div>`;
-                toast('Error loading questions: ' + (err.message || err));
-            }).getFormQuestions(type);
-        };
-
-        const updateStarsUI = (container, val) => {
-            container.querySelectorAll('.star').forEach(s => {
-                if (parseInt(s.getAttribute('data-value')) <= val) s.classList.add('active');
-                else s.classList.remove('active');
-            });
-            const valEl = container.querySelector('.score-value');
-            if (valEl) valEl.textContent = val.toFixed(1);
-        };
-
-        const toggleQuestionVisibility = (header, visible) => {
-            const q = adminQuestionsBuffer.find(x => x.header === header);
-            if (!q) return;
-            q.hidden = !visible;
-            saveAdminQuestionRow(q);
-        };
-
-        const openEditQuestionModal = (header) => {
-            const q = adminQuestionsBuffer.find(x => x.header === header);
-            if (!q) return;
-            $('editQHeader').value = q.header;
-            $('editQLabel').value = q.label;
-            $('editQDesc').value = q.description;
-            $('editQType').value = q.type;
-            $('editQuestionModal').style.display = 'flex';
-        };
-
-        const submitEditQuestion = () => {
-            const header = $('editQHeader').value;
-            const q = adminQuestionsBuffer.find(x => x.header === header);
-            if (!q) return;
-
-            q.label = $('editQLabel').value;
-            q.description = $('editQDesc').value;
-            q.type = $('editQType').value;
-
-            saveAdminQuestionRow(q, () => {
-                $('editQuestionModal').style.display = 'none';
-            });
-        };
-
-        const saveAdminQuestionRow = (q, cb) => {
-            showLoading('جاري الحفظ...');
-            google.script.run.withSuccessHandler(() => {
-                hideLoading();
-                toast('تم الحفظ بنجاح');
-                if (cb) cb();
-                loadAdminQuestions();
-            }).withFailureHandler(err => { hideLoading(); toast(err.message); }).saveFormQuestionSettings(currentAdminQuestionType, [q]);
-        };
-
-        const openAddQuestionModal = () => {
-            $('newQHeader').value = '';
-            $('newQType').value = 'textarea';
-            $('addQuestionModal').style.display = 'flex';
-        };
-
-        const submitAddQuestion = () => {
-            const header = $('newQHeader').value.trim();
-            const type = $('newQType').value;
-            if (!header) return toast('يرجى إدخال عنوان السؤال');
-
-            showLoading('جاري الإضافة...');
-            google.script.run.withSuccessHandler(() => {
-                hideLoading();
-                toast('تمت إضافة السؤال بنجاح');
-                $('addQuestionModal').style.display = 'none';
-                loadAdminQuestions();
-            }).withFailureHandler(err => { hideLoading(); toast(err.message); }).addQuestionColumn(currentAdminQuestionType, header, type);
-        };
-
-        const deleteQuestion = (header) => {
-            if (!confirm(`هل أنت متأكد من حذف السؤال "${header}"؟ سيتم حذف العمود بالكامل من الجدول!`)) return;
-
-            showLoading('جاري الحذف...');
-            google.script.run.withSuccessHandler(() => {
-                hideLoading();
-                toast('تم الحذف بنجاح');
-                loadAdminQuestions();
-            }).withFailureHandler(err => { hideLoading(); toast(err.message); }).deleteQuestionColumn(currentAdminQuestionType, header);
         };
 
         const loadAdminStats = () => {
@@ -3755,66 +3565,189 @@
             if (counter) counter.textContent = count;
         };
 
-        const openEditFollowupModal = (company, sessionNum) => {
+        // === QUESTION MANAGEMENT JS ===
+        let currentQuestionType = 'feedback';
+        let currentQuestions = [];
+        let currentHeaders = [];
+
+        const switchQuestionType = (type, el) => {
+            const tabs = el.parentElement.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            currentQuestionType = type;
+            loadQuestions(type);
+        };
+
+        const loadQuestions = (type) => {
+            showLoading('جاري تحميل الأسئلة...');
+            // Load both config and headers
+            google.script.run.withSuccessHandler(function (config) {
+                currentQuestions = config;
+                google.script.run.withSuccessHandler(function (headers) {
+                    currentHeaders = headers;
+                    hideLoading();
+                    renderQuestionsList();
+                    populateHeaderDropdown();
+                }).getSpreadsheetHeaders(type);
+            }).getQuestionsConfig(type);
+        };
+
+        const renderQuestionsList = () => {
+            const list = $('adminQuestionsTable');
+            list.innerHTML = currentQuestions.map((q, idx) => `
+                <tr>
+                    <td>
+                        <div style="font-weight:700">${q.label}</div>
+                        <div style="font-size:11px; color:var(--muted)">${q.description || ''}</div>
+                    </td>
+                    <td><span class="badge">${q.type}</span></td>
+                    <td>Column ${q.column}</td>
+                    <td style="text-align:center">${q.order}</td>
+                    <td style="text-align:center">
+                        <span class="badge ${q.visible ? 'success' : ''}">${q.visible ? 'نعم' : 'لا'}</span>
+                    </td>
+                    <td style="text-align:center">
+                        <div style="display:flex; gap:8px; justify-content:center">
+                            <button class="btn secondary" style="padding:4px 8px" onclick="editQuestionByIndex(${idx})">تعديل</button>
+                            <button class="btn ghost" style="padding:4px 8px; color:var(--danger)" onclick="deleteQuestionByIndex(${idx})">حذف</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            if (currentQuestions.length === 0) {
+                list.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted)">لا توجد أسئلة مضافة حالياً</td></tr>';
+            }
+        };
+
+        const populateHeaderDropdown = () => {
+            const sel = $('qColumn');
+            sel.innerHTML = currentHeaders.map(h => `<option value="${h.index}">${h.label} (العمود ${h.index})</option>`).join('');
+        };
+
+        const openAddQuestionModal = () => {
+            $('questionModalTitle').textContent = 'إضافة سؤال جديد';
+            $('questionForm').reset();
+            $('qId').value = 'q_' + Date.now();
+            $('qFormType').value = currentQuestionType;
+            $('qOrder').value = currentQuestions.length + 1;
+            $('qOptionsGroup').style.display = 'none';
+            $('questionModal').style.display = 'flex';
+        };
+
+        const editQuestionByIndex = (idx) => {
+            const q = currentQuestions[idx];
+            $('questionModalTitle').textContent = 'تعديل سؤال';
+            $('qId').value = q.id;
+            $('qFormType').value = q.formType;
+            $('qLabel').value = q.label;
+            $('qDescription').value = q.description || '';
+            $('qType').value = q.type;
+            $('qOrder').value = q.order;
+            $('qColumn').value = q.column;
+            $('qVisible').checked = q.visible === true;
+            $('qOptions').value = q.options ? q.options.join(', ') : '';
+
+            toggleOptionsGroup(q.type);
+            $('questionModal').style.display = 'flex';
+        };
+
+        const deleteQuestionByIndex = (idx) => {
+            if (!confirm('هل أنت متأكد من حذف هذا السؤال؟')) return;
+            currentQuestions.splice(idx, 1);
+            saveQuestionsBatch();
+        };
+
+        const toggleOptionsGroup = (type) => {
+            $('qOptionsGroup').style.display = type === 'select' ? 'block' : 'none';
+        };
+
+        $('qType').onchange = (e) => toggleOptionsGroup(e.target.value);
+
+        const saveQuestionUI = () => {
+            const id = $('qId').value;
+            const label = $('qLabel').value;
+            if (!label) return toast('يرجى إدخال نص السؤال');
+
+            const q = {
+                id: id,
+                formType: $('qFormType').value,
+                label: label,
+                description: $('qDescription').value,
+                type: $('qType').value,
+                order: parseInt($('qOrder').value),
+                column: parseInt($('qColumn').value),
+                visible: $('qVisible').checked,
+                options: $('qOptions').value ? $('qOptions').value.split(',').map(s => s.trim()) : []
+            };
+
+            const existingIdx = currentQuestions.findIndex(x => x.id === id);
+            if (existingIdx > -1) {
+                currentQuestions[existingIdx] = q;
+            } else {
+                currentQuestions.push(q);
+            }
+
+            saveQuestionsBatch();
+            $('questionModal').style.display = 'none';
+        };
+
+        const saveQuestionsBatch = () => {
+            showLoading('جاري الحفظ...');
+            google.script.run.withSuccessHandler(() => {
+                hideLoading();
+                toast('تم الحفظ بنجاح');
+                loadQuestions(currentQuestionType);
+            }).saveQuestionsConfig(currentQuestions);
+        };
+
+        const openEditFollowupModal = (company, sessionNum, status, achievements, actions, score) => {
             $('efCompany').value = company;
             $('efSessionNum').value = sessionNum;
 
-            const companyData = followUpData.find(c => c.company.toLowerCase() === company.toLowerCase());
-            const session = companyData ? companyData.sessions.find(s => s.num === sessionNum) : null;
-
-            showLoading('جاري التحميل...');
-            google.script.run.withSuccessHandler(function (questions) {
+            showLoading('جاري تحميل بيانات الجلسة...');
+            renderDynamicFields('dynamicEditFields', 'feedback', () => {
                 hideLoading();
-                const container = $('editFollowupDynamicFields');
-                container.innerHTML = '';
 
-                questions.filter(q => !q.hidden).forEach(q => {
-                    const group = document.createElement('div');
-                    group.className = 'form-group';
-                    let val = session ? (session[q.header] || '') : '';
+                // Map legacy params to the new dynamic fields
+                // Note: The caller passes status, achievements, actions, etc.
+                // We'll try to find fields with those IDs or matching labels
+                const fields = {
+                    'currentStatus': status,
+                    'achievements': achievements,
+                    'actionSteps': actions,
+                    'mentorScore': score
+                };
 
-                    let inputHtml = '';
-                    if (q.type === 'star') {
-                        const numVal = parseFloat(val || 0);
-                        inputHtml = `
-                            <div class="score-stars dynamic-stars" data-field="${q.header}">
-                                ${[1, 2, 3, 4, 5].map(v => `<span class="star ${v <= numVal ? 'active' : ''}" data-value="${v}">★</span>`).join('')}
-                                <div class="score-value">${numVal.toFixed(1)}</div>
-                            </div>
-                            <input type="hidden" data-header="${q.header}" value="${numVal.toFixed(1)}">
-                        `;
-                    } else if (q.type === 'input') {
-                        inputHtml = `<input type="text" data-header="${q.header}" dir="auto" value="${val.replace(/"/g, '&quot;')}" placeholder="${q.label}...">`;
-                    } else {
-                        inputHtml = `
-                            <textarea data-header="${q.header}" dir="auto" maxlength="1000" oninput="updateCharCount(this)" placeholder="${q.label}...">${val}</textarea>
-                            <div class="char-counter"><span class="count">${val.length}</span> / 1000</div>
-                        `;
+                // Also get extra fields from followUpData if available
+                const currentItem = followUpData.find(c => c.company.toLowerCase() === company.toLowerCase());
+                const currentSession = currentItem ? currentItem.sessions.find(s => s.num === sessionNum) : null;
+
+                if (currentSession) {
+                    Object.assign(fields, {
+                        'prodScore': currentSession.prodScore,
+                        'opsScore': currentSession.opsScore,
+                        'salesScore': currentSession.salesScore,
+                        'mktScore': currentSession.mktScore,
+                        'finScore': currentSession.finScore
+                    });
+                }
+
+                currentQuestions.forEach(q => {
+                    const val = fields[q.id];
+                    if (val !== undefined) {
+                        if (q.type === 'rating') {
+                            setRatingValue(q.id, val || 0);
+                        } else {
+                            const el = $(q.id);
+                            if (el) el.value = val || '';
+                        }
                     }
-
-                    group.innerHTML = `
-                        <label>${q.label}</label>
-                        ${q.description ? `<div class="q-desc">${q.description}</div>` : ''}
-                        ${inputHtml}
-                    `;
-                    container.appendChild(group);
-                });
-
-                // Re-bind stars
-                container.querySelectorAll('.dynamic-stars .star').forEach(star => {
-                    star.onclick = function () {
-                        const v = parseFloat(this.getAttribute('data-value'));
-                        const parent = this.parentElement;
-                        updateStarsUI(parent, v);
-                        const input = parent.parentElement.querySelector('input[type="hidden"]');
-                        if (input) input.value = v.toFixed(1);
-                        markDirty();
-                    };
+                    if (q.type === 'text') updateCharCount($(q.id));
                 });
 
                 $('editFollowupModal').style.display = 'flex';
                 document.body.style.overflow = 'hidden';
-            }).getFormQuestions('feedback');
+            });
         };
 
         const closeEditFollowupModal = () => {
@@ -3966,7 +3899,7 @@
                         ${r.label}
                     </div>
                 `).join('');
-            }).withFailureHandler(err => toast('Error loading rounds: ' + err.message)).getRounds(false);
+            }).getRounds(false);
         }
 
         function selectRoundCard(id, el) {
@@ -3995,15 +3928,178 @@
                         ${name}
                     </div>
                 `).join('');
-            }).withFailureHandler(err => toast('Error loading mentors: ' + err.message)).getMentors(id);
+            }).getMentors(id);
         }
 
-        function selectMentorCard(name, el) {
-            const parent = el.parentElement;
-            parent.querySelectorAll('.round-card').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            $('mentorName').value = name;
-        }
+        const renderDynamicFields = (containerId, type, callback) => {
+            const container = $(containerId);
+            container.innerHTML = '<div style="padding:20px; text-align:center">جاري تحميل الحقول...</div>';
+
+            google.script.run.withSuccessHandler(function (config) {
+                currentQuestions = config;
+                container.innerHTML = '';
+
+                config.forEach(q => {
+                    if (!q.visible) return;
+
+                    const group = document.createElement('div');
+                    group.className = 'form-group';
+
+                    let html = `<label>${q.label}</label>`;
+                    if (q.description) html += `<div class="q-desc">${q.description}</div>`;
+
+                    if (q.type === 'text') {
+                        html += `<textarea id="${q.id}" dir="auto" maxlength="1000" oninput="updateCharCount(this)" placeholder="أدخل هنا..."></textarea>
+                                 <div class="char-counter"><span class="count">0</span> / 1000</div>`;
+                    } else if (q.type === 'rating') {
+                        html += `<div class="score-stars f-stars" data-field="${q.id}">
+                                    <span class="star" data-value="1">★</span>
+                                    <span class="star" data-value="2">★</span>
+                                    <span class="star" data-value="3">★</span>
+                                    <span class="star" data-value="4">★</span>
+                                    <span class="star" data-value="5">★</span>
+                                    <div class="score-value">0.0</div>
+                                 </div>
+                                 <input type="hidden" id="${q.id}" value="0.0">`;
+                    } else if (q.type === 'select') {
+                        const opts = (q.options || []).map(o => `<option value="${o}">${o}</option>`).join('');
+                        html += `<div class="select-wrapper">
+                                    <select id="${q.id}" dir="auto">
+                                        <option value="">اختر...</option>
+                                        ${opts}
+                                    </select>
+                                 </div>`;
+                    }
+
+                    group.innerHTML = html;
+                    container.appendChild(group);
+                });
+
+                // Attach star listeners if any
+                container.querySelectorAll('.star').forEach(s => {
+                    s.onclick = (e) => {
+                        const val = e.target.getAttribute('data-value');
+                        const fieldId = e.target.closest('.score-stars').getAttribute('data-field');
+                        setRatingValue(fieldId, val);
+                        markDirty();
+                    };
+                });
+
+                if (callback) callback();
+            }).getQuestionsConfig(type);
+        };
+
+        const setRatingValue = (fieldId, val) => {
+            const container = document.querySelector(`.score-stars[data-field="${fieldId}"]`);
+            if (!container) return;
+            const stars = container.querySelectorAll('.star');
+            const valEl = container.querySelector('.score-value');
+            const hidden = $(fieldId);
+
+            const v = parseFloat(val);
+            if (hidden) hidden.value = v.toFixed(1);
+            if (valEl) valEl.textContent = v.toFixed(1);
+
+            stars.forEach(s => {
+                if (parseInt(s.getAttribute('data-value')) <= v) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+        };
+
+        const collectDynamicData = (formId, type) => {
+            const data = {};
+            // For now, type doesn't matter, we just find all fields that match the current config for that form
+            // But we need to know WHICH questions to look for. We use currentQuestions (assuming it was just loaded for the form)
+            currentQuestions.forEach(q => {
+                const el = $(q.id);
+                if (el) {
+                    data[q.id] = el.value;
+                }
+            });
+            return data;
+        };
+
+        // Update form submission to include dynamic data
+        $('feedbackForm').onsubmit = function (e) {
+            e.preventDefault();
+            const lang = document.documentElement.getAttribute('lang') || 'ar';
+
+            const formData = {
+                mentorName: $('fMentorName').value,
+                roundName: $('roundId').value,
+                companyName: $('fCompanyName').value,
+                dayOfSession: $('fDay').value
+            };
+
+            if (!formData.companyName) return toast('Select company');
+            if (!formData.dayOfSession) return toast('Select day');
+
+            // Add dynamic fields
+            const dynamic = collectDynamicData('feedbackForm', 'feedback');
+            Object.assign(formData, dynamic);
+
+            showLoading('Saving feedback...');
+            google.script.run.withSuccessHandler(function () {
+                hideLoading();
+                toast('Feedback saved');
+                closeFeedbackModal();
+                loadFollowUpLazy();
+            }).withFailureHandler(function (err) {
+                hideLoading();
+                toast(err.message);
+            }).submitFeedback(formData);
+        };
+
+        $('diagnoseForm').onsubmit = function (e) {
+            e.preventDefault();
+            const formData = {
+                mentorName: $('dMentorName').value,
+                companyName: $('dCompanyName').value,
+                companyAge: $('dCompanyAge').value,
+                location: $('dLocation').value,
+                teamSize: $('dTeamSize').value
+            };
+
+            // Combined field for Column C compatibility
+            formData.companyCombined = `${formData.companyName} \\ ${formData.companyAge} \\ ${formData.location} \\ ${formData.teamSize}`;
+
+            // Add dynamic fields
+            const dynamic = collectDynamicData('diagnoseForm', 'diagnose');
+            Object.assign(formData, dynamic);
+
+            showLoading('Saving diagnose...');
+            google.script.run.withSuccessHandler(function () {
+                hideLoading();
+                toast('Diagnose saved');
+                closeDiagnoseModal();
+            }).withFailureHandler(function (err) {
+                hideLoading();
+                toast(err.message);
+            }).submitDiagnose(formData);
+        };
+
+        $('editFollowupForm').onsubmit = function (e) {
+            e.preventDefault();
+            const formData = {
+                company: $('efCompany').value,
+                sessionNum: $('efSessionNum').value
+            };
+
+            // Add dynamic fields
+            const dynamic = collectDynamicData('editFollowupForm', 'feedback');
+            Object.assign(formData, dynamic);
+
+            showLoading('Saving changes...');
+            google.script.run.withSuccessHandler(function () {
+                hideLoading();
+                toast('Changes saved');
+                closeEditFollowupModal();
+                loadFollowUpLazy();
+            }).withFailureHandler(function (err) {
+                hideLoading();
+                toast(err.message);
+            }).updateFollowupSession(formData);
+        };
 
         const openMentorPinModal = () => {
             $('newMentorPin').value = '';
@@ -4017,7 +4113,10 @@
                 hideLoading();
                 $('mentorPinModal').style.display = 'none';
                 toast('تم تحديث رمز الدخول بنجاح');
-            }).withFailureHandler(err => { hideLoading(); toast('Error updating pin: ' + err.message); }).updateMentorPin(currentMentor, pin);
+            }).withFailureHandler(function (err) {
+                hideLoading();
+                toast(err.message);
+            }).updateMentorPin(currentMentor, pin);
         };
 
         function renderCompanySearchResults(search) {
@@ -4138,9 +4237,9 @@
                            ${s.file ? (lang === 'ar' ? '📎 عرض الملف المرفق' : '📎 View Uploaded File') : (lang === 'ar' ? '(لا يوجد ملفات)' : '(No Uploaded Files)')}
                          </a>
                          ${isOwner ? `
-                            <button class="btn" style="min-height:44px; padding:6px 20px; font-size:14px; border-radius:12px; background: rgba(79, 70, 229, 0.1); border: 1px solid var(--accent); white-space:nowrap;" onclick="event.stopPropagation(); openEditFollowupModal('${item.company.replace(/'/g, "\\'")}', ${s.num})">
-                              ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
-                            </button>
+                           <button class="btn" style="min-height:44px; padding:6px 20px; font-size:14px; border-radius:12px; background: rgba(79, 70, 229, 0.1); border: 1px solid var(--accent); white-space:nowrap;" onclick="event.stopPropagation(); openEditFollowupModal('${item.company.replace(/'/g, "\\'")}', ${s.num}, \`${(s.status || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, \`${(s.achievements || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, \`${(s.actions || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, '${s.score}')">
+                             ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
+                           </button>
                          ` : '<span class="tag" style="font-size: 11px; padding: 6px 12px; opacity: 0.6; background: rgba(0,0,0,0.05); border-radius:8px;">Read Only</span>'}
                       </div>
                    </div>
@@ -4336,18 +4435,19 @@
                 // Combined string for Column C
                 const combined = `${company} \\ ${age} \\ ${loc} \\ ${size}`;
 
-                const dynamicData = {};
-                document.getElementById('diagnoseDynamicFields').querySelectorAll('[data-header]').forEach(f => {
-                    dynamicData[f.getAttribute('data-header')] = f.value;
-                });
-
                 const formData = {
                     mentorName: $('dMentorName').value,
                     companyName: company,
                     companyCombined: combined,
-                    dynamicData: dynamicData,
-                    mentorScore: $('dScore').value,
-                    roundName: (currentRound || 'Round_01').replace('R_', 'Round_')
+                    history: $('dHistory').value,
+                    mainComplaint: $('dMainComplaint').value,
+                    symptoms: $('dSymptoms').value,
+                    signs: $('dSigns').value,
+                    expertNotes: $('dExpertNotes').value,
+                    possibleCauses: $('dPossibleCauses').value,
+                    tests: $('dTests').value,
+                    actualCause: $('dActualCause').value,
+                    solutionPlan: $('dSolutionPlan').value
                 };
 
                 google.script.run.withSuccessHandler(function () {
@@ -4399,16 +4499,18 @@
                 btn.disabled = true;
                 showLoading('Submitting feedback...');
 
-                const dynamicData = {};
-                document.getElementById('feedbackDynamicFields').querySelectorAll('[data-header]').forEach(f => {
-                    dynamicData[f.getAttribute('data-header')] = f.value;
-                });
-
                 const formData = {
                     mentorName: $('fMentorName').value,
                     companyName: $('fCompanyName').value,
                     dayOfSession: $('fDay').value,
-                    dynamicData: dynamicData,
+                    currentStatus: $('fStatus').value,
+                    achievements: $('fAchievements').value,
+                    actionSteps: $('fActionSteps').value,
+                    prodScore: $('fProdScore').value,
+                    opsScore: $('fOpsScore').value,
+                    salesScore: $('fSalesScore').value,
+                    mktScore: $('fMktScore').value,
+                    finScore: $('fFinScore').value,
                     mentorScore: $('fScore').value,
                     roundName: (currentRound || 'R_01').replace('R_', 'Round_')
                 };
@@ -4467,16 +4569,19 @@
                 btn.disabled = true;
                 showLoading('Saving changes...');
 
-                const dynamicData = {};
-                document.getElementById('editFollowupDynamicFields').querySelectorAll('[data-header]').forEach(f => {
-                    dynamicData[f.getAttribute('data-header')] = f.value;
-                });
-
                 const params = {
                     roundId: currentRound,
                     companyName: $('efCompany').value,
                     sessionNum: parseInt($('efSessionNum').value),
-                    dynamicData: dynamicData
+                    status: $('efStatus').value,
+                    achievements: $('efAchievements').value,
+                    actions: $('efActions').value,
+                    prodScore: $('efProdScore').value,
+                    opsScore: $('efOpsScore').value,
+                    salesScore: $('efSalesScore').value,
+                    mktScore: $('efMktScore').value,
+                    finScore: $('efFinScore').value,
+                    score: $('efScore').value
                 };
 
                 google.script.run.withSuccessHandler(function () {
@@ -4491,7 +4596,7 @@
                     hideLoading();
                     toast('Error: ' + err.message);
                     btn.disabled = false;
-                }).updateFollowupSession(params.roundId, params.companyName, params.sessionNum, params.dynamicData);
+                }).updateFollowupSession(params.roundId, params.companyName, params.sessionNum, params.status, params.achievements, params.actions, params.prodScore, params.opsScore, params.salesScore, params.mktScore, params.finScore, params.score);
             });
 
             // Star rating for Edit
@@ -4525,21 +4630,9 @@
                     );
 
                     if (isSubmitted) {
-                        const fields = document.getElementById('feedbackDynamicFields').querySelectorAll('[data-header]');
-                        fields.forEach(f => {
-                            const h = f.getAttribute('data-header');
-                            if (session[h] !== undefined) {
-                                if (f.tagName === 'TEXTAREA' || f.tagName === 'INPUT') {
-                                    f.value = session[h];
-                                    if (f.tagName === 'TEXTAREA') updateCharCount(f);
-                                } else if (f.type === 'hidden') {
-                                    // Star rating
-                                    f.value = parseFloat(session[h] || 0).toFixed(1);
-                                    const container = f.parentElement.querySelector('.score-stars');
-                                    if (container) updateStarsUI(container, parseFloat(session[h] || 0));
-                                }
-                            }
-                        });
+                        $('fStatus').value = session.status || '';
+                        $('fAchievements').value = session.achievements || '';
+                        $('fActionSteps').value = session.actions || '';
 
                         const score = parseFloat(session.score || 0);
                         $('fScore').value = score.toFixed(1);
@@ -4549,24 +4642,48 @@
                             else s.classList.remove('active');
                         });
 
-                        lastLoadedDay = this.value;
+                        // Populating new evaluations for day switch
+                        const fields = [
+                            { id: 'fProdScore', val: session.prodScore },
+                            { id: 'fOpsScore', val: session.opsScore },
+                            { id: 'fSalesScore', val: session.salesScore },
+                            { id: 'fMktScore', val: session.mktScore },
+                            { id: 'fFinScore', val: session.finScore }
+                        ];
+                        fields.forEach(f => {
+                            const v = parseFloat(f.val || 0);
+                            $(f.id).value = v.toFixed(1);
+                            const container = $(f.id).parentElement.querySelector('.score-stars');
+                            if (container) {
+                                container.querySelectorAll('.star').forEach(s => {
+                                    if (parseInt(s.getAttribute('data-value')) <= v) s.classList.add('active');
+                                    else s.classList.remove('active');
+                                });
+                                const valEl = container.querySelector('.score-value');
+                                if (valEl) valEl.textContent = v.toFixed(1);
+                            }
+                        });
+
+                        lastLoadedDay = this.value; // Track that we loaded this day
                         $('fSubmitBtn').textContent = i18n[lang].btn_save_changes;
                     } else {
+                        // NEW behavior: Only reset if we were previously viewing a loaded day
                         if (lastLoadedDay !== null) {
-                            const fields = document.getElementById('feedbackDynamicFields').querySelectorAll('[data-header]');
-                            fields.forEach(f => {
-                                if (f.tagName === 'TEXTAREA' || f.tagName === 'INPUT') f.value = '';
-                                else if (f.type === 'hidden') {
-                                    f.value = '0.0';
-                                    const container = f.parentElement.querySelector('.score-stars');
-                                    if (container) updateStarsUI(container, 0);
-                                }
-                                if (f.tagName === 'TEXTAREA') updateCharCount(f);
-                            });
-
+                            ['fStatus', 'fAchievements', 'fActionSteps'].forEach(id => $(id).value = '');
                             $('fScore').value = '0.0';
                             $('fScoreValue').textContent = '0.0';
                             document.querySelectorAll('#starRating .star').forEach(s => s.classList.remove('active'));
+
+                            // Reset new stars
+                            ['fProdScore', 'fOpsScore', 'fSalesScore', 'fMktScore', 'fFinScore'].forEach(id => {
+                                $(id).value = '0.0';
+                                const container = $(id).parentElement.querySelector('.score-stars');
+                                if (container) {
+                                    container.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+                                    const valEl = container.querySelector('.score-value');
+                                    if (valEl) valEl.textContent = '0.0';
+                                }
+                            });
                         }
                         lastLoadedDay = null;
                         $('fSubmitBtn').textContent = i18n[lang].btn_submit;
