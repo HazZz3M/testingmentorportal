@@ -2502,6 +2502,7 @@
                 <div class="nav-tabs" style="display: flex; margin-bottom: 24px;">
                     <div class="tab active" onclick="switchAdminTab('stats', this)">الإحصائيات</div>
                     <div class="tab" onclick="switchAdminTab('management', this)">إدارة الموجهين والدورات</div>
+                    <div class="tab" onclick="switchAdminTab('questions', this)">إدارة أسئلة النماذج</div>
                     <div class="tab" onclick="switchAdminTab('settings', this)">إعدادات الربط</div>
                 </div>
 
@@ -2595,6 +2596,35 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- New Questions Management View -->
+                <div id="adminQuestionsView" style="display:none">
+                    <div class="row" style="margin-bottom:20px; align-items: center; justify-content: space-between;">
+                        <div
+                            style="display:flex; gap:12px; background: var(--card-2); padding: 4px; border-radius: 12px;">
+                            <button class="tab active" id="btnAdminQuestionsFeedback"
+                                onclick="switchQuestionType('feedback')">أسئلة التقارير</button>
+                            <button class="tab" id="btnAdminQuestionsDiagnose"
+                                onclick="switchQuestionType('diagnose')">أسئلة التشخيص</button>
+                        </div>
+                        <button class="btn" onclick="openAddQuestionModal()">إضافة سؤال جديد +</button>
+                    </div>
+
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>السؤال (العمود)</th>
+                                    <th>نص السؤال</th>
+                                    <th>نوع السؤال</th>
+                                    <th style="text-align:center">إظهار</th>
+                                    <th style="text-align:center">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminQuestionsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2633,6 +2663,68 @@
         </div>
     </div>
     <div class="toast" id="toast"></div>
+
+    <!-- Add Question Modal -->
+    <div class="modal" id="addQuestionModal">
+        <div class="modal-content" style="max-width: 450px">
+            <div class="modal-header">
+                <div class="modal-title">إضافة سؤال جديد</div>
+                <button class="modal-close" onclick="$('addQuestionModal').style.display='none'">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>عنوان السؤال (العمود في الجدول)</label>
+                    <input type="text" id="newQHeader" placeholder="مثلاً: ملاحظات إضافية">
+                </div>
+                <div class="form-group">
+                    <label>نوع السؤال</label>
+                    <div class="select-wrapper">
+                        <select id="newQType">
+                            <option value="textarea">نص طويل (Textarea)</option>
+                            <option value="star">تقييم بالنجوم (Stars)</option>
+                            <option value="input">نص قصير (Input)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="font-size:12px; color:var(--muted); margin-top: -10px; margin-bottom: 20px;">
+                    سيتم إضافة عمود جديد في الجدول قبل عمود "Round Name"
+                </div>
+                <button class="btn" onclick="submitAddQuestion()">إضافة السؤال</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Question Modal -->
+    <div class="modal" id="editQuestionModal">
+        <div class="modal-content" style="max-width: 500px">
+            <div class="modal-header">
+                <div class="modal-title">تعديل السؤال</div>
+                <button class="modal-close" onclick="$('editQuestionModal').style.display='none'">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editQHeader">
+                <div class="form-group">
+                    <label>نص السؤال (يظهر للمستخدم)</label>
+                    <input type="text" id="editQLabel">
+                </div>
+                <div class="form-group">
+                    <label>وصف السؤال</label>
+                    <textarea id="editQDesc" style="min-height: 80px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>نوع السؤال</label>
+                    <div class="select-wrapper">
+                        <select id="editQType">
+                            <option value="textarea">نص طويل (Textarea)</option>
+                            <option value="star">تقييم بالنجوم (Stars)</option>
+                            <option value="input">نص قصير (Input)</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="submitEditQuestion()">حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Feedback Form Modal -->
     <div class="modal" id="feedbackModal">
@@ -2693,141 +2785,35 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="fStatus" data-i18n="label_status">Current Status</label>
-                        <div class="q-desc" data-i18n="desc_status">يرجى توضيح المرحلة التي وصلت إليها الشركة حاليًا وأي
-                            جوانب تحتاج إلى دعم أو تطوير</div>
-                        <textarea id="fStatus" dir="auto" maxlength="1000" oninput="updateCharCount(this)"
-                            placeholder="Enter description..." data-i18n-placeholder="placeholder_desc"></textarea>
-                        <div class="char-counter"><span class="count">0</span> / 1000</div>
+                    <div id="feedbackDynamicFields">
+                        <div style="text-align:center; padding:20px; color:var(--muted)">Loading questions...</div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="fAchievements" data-i18n="label_achievements">Achievements Since The Last
-                            Session</label>
-                        <div class="q-desc" data-i18n="desc_achievements">يرجى توضيح الخطوات أو المهام التي تم الاتفاق
-                            عليها في الجلسة السابقة، وما الذي تم تنفيذه منها بالفعل. في حال وجود مهام لم يتم تنفيذها،
-                            يرجى ذكر الأسباب أو التحديات التي منعت تنفيذها</div>
-                        <textarea id="fAchievements" dir="auto" maxlength="1000" oninput="updateCharCount(this)"
-                            placeholder="Enter achievements..."
-                            data-i18n-placeholder="placeholder_achievements"></textarea>
-                        <div class="char-counter"><span class="count">0</span> / 1000</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="fActionSteps" data-i18n="label_action_steps">Action Steps To Be Completed Before The
-                            Next Session</label>
-                        <div class="q-desc" data-i18n="desc_action_steps">بناءً على تقييم وضع الشركة الحالي ونتائج
-                            الجلسة، يرجى تحديد الخطوات العملية التي ينبغي على الشركة تنفيذها قبل الجلسة القادمة، مع
-                            التركيز على الإجراءات القابلة للتنفيذ التي ستساهم في تقدم الشركة.</div>
-                        <textarea id="fActionSteps" dir="auto" maxlength="1000" oninput="updateCharCount(this)"
-                            placeholder="Enter next steps..." data-i18n-placeholder="placeholder_next_steps"></textarea>
-                        <div class="char-counter"><span class="count">0</span> / 1000</div>
-                    </div>
-
-                    <div class="row" style="gap: 16px; margin-bottom: 24px;">
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_prod_score">تقييم المنتج</label>
-                                <div class="score-stars f-stars" data-field="fProdScore">
-                                    <span class="star" data-value="1">★</span>
-                                    <span class="star" data-value="2">★</span>
-                                    <span class="star" data-value="3">★</span>
-                                    <span class="star" data-value="4">★</span>
-                                    <span class="star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="fProdScore" value="0.0">
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_ops_score">تقييم العمليات</label>
-                                <div class="score-stars f-stars" data-field="fOpsScore">
-                                    <span class="star" data-value="1">★</span>
-                                    <span class="star" data-value="2">★</span>
-                                    <span class="star" data-value="3">★</span>
-                                    <span class="star" data-value="4">★</span>
-                                    <span class="star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="fOpsScore" value="0.0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row" style="gap: 16px; margin-bottom: 24px;">
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_sales_score">تقييم المبيعات</label>
-                                <div class="score-stars f-stars" data-field="fSalesScore">
-                                    <span class="star" data-value="1">★</span>
-                                    <span class="star" data-value="2">★</span>
-                                    <span class="star" data-value="3">★</span>
-                                    <span class="star" data-value="4">★</span>
-                                    <span class="star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="fSalesScore" value="0.0">
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_mkt_score">تقييم التسويق</label>
-                                <div class="score-stars f-stars" data-field="fMktScore">
-                                    <span class="star" data-value="1">★</span>
-                                    <span class="star" data-value="2">★</span>
-                                    <span class="star" data-value="3">★</span>
-                                    <span class="star" data-value="4">★</span>
-                                    <span class="star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="fMktScore" value="0.0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row" style="gap: 16px; margin-bottom: 24px;">
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_fin_score">تقييم الماليات</label>
-                                <div class="score-stars f-stars" data-field="fFinScore">
-                                    <span class="star" data-value="1">★</span>
-                                    <span class="star" data-value="2">★</span>
-                                    <span class="star" data-value="3">★</span>
-                                    <span class="star" data-value="4">★</span>
-                                    <span class="star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="fFinScore" value="0.0">
-                            </div>
-                        </div>
-                        <div class="col"></div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label data-i18n="label_mentor_score">Mentor Score (0 - 5)</label>
-                        <div class="q-desc" data-i18n="desc_mentor_score">ايه هو تقييمك للشركه بشكل عام (حيث 5 هو الاعلي
-                            تقييما)</div>
-                        <div class="score-stars" id="starRating">
-                            <span class="star" data-value="1">★</span>
-                            <span class="star" data-value="2">★</span>
-                            <span class="star" data-value="3">★</span>
-                            <span class="star" data-value="4">★</span>
-                            <span class="star" data-value="5">★</span>
-                            <div class="score-value" id="fScoreValue">0.0</div>
-                        </div>
-                        <input type="hidden" id="fScore" value="0.0">
-                    </div>
-                </form>
+                    <div class="col"></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn secondary" onclick="closeFeedbackModal()"
-                    data-i18n="btn_cancel">Cancel</button>
-                <button type="submit" form="feedbackForm" class="btn" id="fSubmitBtn" data-i18n="btn_submit">Submit
-                    Feedback</button>
+
+            <div class="form-group" style="margin-bottom: 8px;">
+                <label data-i18n="label_mentor_score">Mentor Score (0 - 5)</label>
+                <div class="q-desc" data-i18n="desc_mentor_score">ايه هو تقييمك للشركه بشكل عام (حيث 5 هو الاعلي
+                    تقييما)</div>
+                <div class="score-stars" id="starRating">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                    <div class="score-value" id="fScoreValue">0.0</div>
+                </div>
+                <input type="hidden" id="fScore" value="0.0">
             </div>
+            </form>
         </div>
+        <div class="modal-footer">
+            <button type="button" class="btn secondary" onclick="closeFeedbackModal()"
+                data-i18n="btn_cancel">Cancel</button>
+            <button type="submit" form="feedbackForm" class="btn" id="fSubmitBtn" data-i18n="btn_submit">Submit
+                Feedback</button>
+        </div>
+    </div>
     </div>
 
     <!-- Edit Followup Modal -->
@@ -2867,97 +2853,8 @@
                         <div class="char-counter"><span class="count">0</span> / 1000</div>
                     </div>
 
-                    <div class="row" style="gap: 16px; margin-bottom: 24px;">
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_prod_score">تقييم المنتج</label>
-                                <div class="score-stars ef-stars-group" data-field="efProdScore">
-                                    <span class="star ef-star" data-value="1">★</span>
-                                    <span class="star ef-star" data-value="2">★</span>
-                                    <span class="star ef-star" data-value="3">★</span>
-                                    <span class="star ef-star" data-value="4">★</span>
-                                    <span class="star ef-star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="efProdScore" value="0.0">
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_ops_score">تقييم العمليات</label>
-                                <div class="score-stars ef-stars-group" data-field="efOpsScore">
-                                    <span class="star ef-star" data-value="1">★</span>
-                                    <span class="star ef-star" data-value="2">★</span>
-                                    <span class="star ef-star" data-value="3">★</span>
-                                    <span class="star ef-star" data-value="4">★</span>
-                                    <span class="star ef-star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="efOpsScore" value="0.0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row" style="gap: 16px; margin-bottom: 24px;">
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_sales_score">تقييم المبيعات</label>
-                                <div class="score-stars ef-stars-group" data-field="efSalesScore">
-                                    <span class="star ef-star" data-value="1">★</span>
-                                    <span class="star ef-star" data-value="2">★</span>
-                                    <span class="star ef-star" data-value="3">★</span>
-                                    <span class="star ef-star" data-value="4">★</span>
-                                    <span class="star ef-star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="efSalesScore" value="0.0">
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_mkt_score">تقييم التسويق</label>
-                                <div class="score-stars ef-stars-group" data-field="efMktScore">
-                                    <span class="star ef-star" data-value="1">★</span>
-                                    <span class="star ef-star" data-value="2">★</span>
-                                    <span class="star ef-star" data-value="3">★</span>
-                                    <span class="star ef-star" data-value="4">★</span>
-                                    <span class="star ef-star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="efMktScore" value="0.0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row" style="gap: 16px; margin-bottom: 24px;">
-                        <div class="col">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="label_fin_score">تقييم الماليات</label>
-                                <div class="score-stars ef-stars-group" data-field="efFinScore">
-                                    <span class="star ef-star" data-value="1">★</span>
-                                    <span class="star ef-star" data-value="2">★</span>
-                                    <span class="star ef-star" data-value="3">★</span>
-                                    <span class="star ef-star" data-value="4">★</span>
-                                    <span class="star ef-star" data-value="5">★</span>
-                                    <div class="score-value">0.0</div>
-                                </div>
-                                <input type="hidden" id="efFinScore" value="0.0">
-                            </div>
-                        </div>
-                        <div class="col"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label data-i18n="label_mentor_score">Mentor Score (0 - 5)</label>
-                        <div class="score-stars" id="efStarRating">
-                            <span class="star ef-star" data-value="1">★</span>
-                            <span class="star ef-star" data-value="2">★</span>
-                            <span class="star ef-star" data-value="3">★</span>
-                            <span class="star ef-star" data-value="4">★</span>
-                            <span class="star ef-star" data-value="5">★</span>
-                            <div class="score-value" id="efScoreValue">0.0</div>
-                        </div>
-                        <input type="hidden" id="efScore" value="0.0">
+                    <div id="editFollowupDynamicFields">
+                        <div style="text-align:center; padding:20px; color:var(--muted)">Loading questions...</div>
                     </div>
                 </form>
             </div>
@@ -3028,89 +2925,16 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="dHistory" data-i18n="label_history">التاريخ</label>
-                        <div class="q-desc" data-i18n="desc_history">اﻟﺘﺪﺧﻼت اﻟﺴﺎﺑﻘﺔ ﻟﺤﻞ ﻫﺬه اﻟﺸﻜﻮى أو أي ﺷﻜﻮى أﺧﺮى
-                        </div>
-                        <textarea id="dHistory" dir="auto" placeholder="Enter previous interventions..."
-                            data-i18n-placeholder="placeholder_history"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dMainComplaint" data-i18n="label_complaint">الشكوى الرئيسية</label>
-                        <div class="q-desc" data-i18n="desc_complaint">ﺗﻜﺘﺐ ﺑﻨﻔﺲ ﺻﻴﺎﻏﺔ اﻟﻤﺆﺳﺲ</div>
-                        <textarea id="dMainComplaint" dir="auto" placeholder="Enter main complaint..."
-                            data-i18n-placeholder="placeholder_complaint"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dSymptoms" data-i18n="label_symptoms">الأعراض</label>
-                        <div class="q-desc" data-i18n="desc_symptoms">ﻛﻴﻒ ﺷﻌﺮ اﻟﻤﺆﺳﺲ أن ﻫﻨﺎك ﻣﺸﻜﻠﺔ؟ ﻣﺎ ﻫﻲ اﻟﻤﺸﺎﻛﻞ اﻷﺧﺮى
-                            اﻟﻤﺘﻌﻠﻘﺔ ﺑﺎﻟﺸﻜﻮى اﻟﺮﺋﻴﺴﻴﺔ اﻟﺘﻲ ﻳﺴﺘﻄﻴﻊ اﻟﻤﺆﺳﺲ ﻣﻼﺣﻈﺘﻬﺎ</div>
-                        <textarea id="dSymptoms" dir="auto" placeholder="Enter symptoms..."
-                            data-i18n-placeholder="placeholder_symptoms"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dSigns" data-i18n="label_signs">العلامات</label>
-                        <div class="q-desc" data-i18n="desc_signs">ﻣﺆﺷﺮات ﺗﻨﺒﺊ ﺑﻮﺟﻮد ﻣشكله ﻳﺴﺘﻄﻴﻊ أن ﻳﺘﻌﺮف ﻋﻠﻴﻬﺎ اﻟﺨﺒﻴﺮ
-                            ﻓﻘﻂ</div>
-                        <textarea id="dSigns" dir="auto" placeholder="Enter signs..."
-                            data-i18n-placeholder="placeholder_signs"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dExpertNotes" data-i18n="label_expert_notes">ملاحظات الخبير</label>
-                        <div class="q-desc" data-i18n="desc_expert_notes">ﺑﻌﺪ ﻓﺤﺺ ﺟﻮاﻧﺐ اﻟﺸﺮﻛﺔ اﻟﺘﺎﻟﻴﺔ: الماليات -
-                            المبيعات - التسويق- المنتج - الفريق حدد ماذا يعمل بشكل عادي، جيد، أو سئ و لماذا؟</div>
-                        <textarea id="dExpertNotes" dir="auto" placeholder="Enter expert notes..."
-                            data-i18n-placeholder="placeholder_expert_notes"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dPossibleCauses" data-i18n="label_possible_causes">الأسباب المحتملة</label>
-                        <div class="q-desc" data-i18n="desc_possible_causes">ﺗﺒﻌﺎً ﻟﻠﻔﺤﺺ، اﻷﻋﺮاض واﻟﻌﻼﻣﺎت ﻣﺎ ﻫﻲ اﻷﺳﺒﺎب
-                            اﻟﻤﺤﺘﻤﻠﺔ اﻟﺘﻲ ﻗﺪ ﺗؤدي إﻟﻰ اﻟﺸﻜﻮى اﻟﺮﺋﻴﺴﻴﺔ ﻟﻠشررﻛﺔ؟ ﺣﺪد ﻣﻦ 3 إﻟﻰ 5 أﺳﺒﺎب</div>
-                        <textarea id="dPossibleCauses" dir="auto" placeholder="Enter possible causes..."
-                            data-i18n-placeholder="placeholder_possible_causes"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dTests" data-i18n="label_tests">الإختبارات</label>
-                        <div class="q-desc" data-i18n="desc_tests">ﺣﺪد اﻹﺧﺘﺒﺎرات اﻟﻤﻄﻠﻮﺑﺔ ﻟﻜﻲ ﺗﺄﻛﺪ أو ﺗﻨﻔﻲ اﻟﻔﺮﺿﻴﺎت
-                            اﻟﻤﺤﺘﻤﻠﺔ</div>
-                        <textarea id="dTests" dir="auto" placeholder="Enter tests..."
-                            data-i18n-placeholder="placeholder_tests"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dActualCause" data-i18n="label_actual_cause">السبب الفعلي</label>
-                        <div class="q-desc" data-i18n="desc_actual_cause">اﻟﻘﺮار اﻟﻨﻬﺎﺋﻲ، ﻣﺎ ﻫﻮ اﻟﺴﺒﺐ اﻟﻔﻌﻠﻲ ﻟﺤﺪوث
-                            اﻟﺸﻜﻮى اﻟﺮﺋﻴﺴﻴﺔ؟</div>
-                        <textarea id="dActualCause" dir="auto" placeholder="Enter actual cause..."
-                            data-i18n-placeholder="placeholder_actual_cause"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dSolutionPlan" data-i18n="label_solution_plan">خطة الحل</label>
-                        <div class="q-desc" data-i18n="desc_solution_plan">ﺗﻘﺪﻳﻢ ﺣﻠﻮل ﺗﻔﺼﻴﻠﻴﺔ وﺧﻄﺔ ﺗﻨﻔﻴﺬ واﺿﺤﺔ ﻟﻤﻌﺎﻟﺠﺔ
-                            اﻟﻤﺸﻜﻠﺔ اﻟﺤﺎﻟﻴﺔ، ﺑﺤﻴﺚ ﺗﻬﺪف ﻫﺬه
-                            اﻟﺤﻠﻮل إﻟﻰ ﺗﻘﻠﻴﻞ اﻷﻋﺮاض، وﻣﻌﺎﻟجة أو اﻟﺤﺪ ﻣﻦ اﻟﺴﺒﺐ اﻟﺠﺬري ﻠﻠﻤﺸﻜﻠﺔ، واﺳﺘﻌﺎدة ﻛﻔﺎءة اﻷداء ﺑﺸﻜﻞ
-                            ﻛﺎﻣﻞ أو ﺟﺰئي. ﻳﺠﺐ ﻋﺮض ﺟﻤﻴﻊ اﻟﺨﻴﺎرات اﻟﻤﺘﺎﺣﺔ ﻋﻠﻰ اﻟﻤﺆﺳﺲ ﺑﺸﻜﻞ ﺷﺎﻣﻞ وﺷﻔﺎف، ﻣﻊ ﺗﻮﺿﻴﺢ اﻟﻨﺘﺎﺋﺞ
-                            اﻟﻤﺘﻮﻗﻌﺔ ﻟﻜﻞ ﺧﻴﺎر، واﻟﺘﻜﺎﻟﻴﻒ اﻟﻤﺮﺗﺒﻄﺔ ﺑﻪ، واﻟﺘﺒﻌﺎت أو اﻟﻤﺨﺎﻃﺮ اﻟﻤﺤﺘﻤﻠﺔ. ﻛﻤﺎ ﻳﻨﺒغي ﺗﻮﺿﻴﺢ
-                            اﻟﻌﻮاﻗﺐ اﻟﻤﺘﺮﺗﺒﺔ ﻋﻠﻰ ﻋﺪم اﺗﺨﺎذ أي إﺟﺮاء. ﻓﻲ اﻟﻨﻬﺎﻳﺔ، ﻳُﻤﻨﺢ اﻟﻤﺆﺳﺲ اﻟﺤﺮﻳﺔ اﻟﻜﺎﻣﻠﺔ ﻻﺧﺘﻴﺎر
-                            اﻟﻤﺴﺎر اﻟﺬي ﻳﺮاه ﻣﻨﺎﺳﺒًﺎ، ﺑﻌﺪ اﻻﻃﻼع اﻟﻜﺎﻣﻞ ﻋﻠﻰ ﻛﺎﻓﺔ اﻟﺒﺪاﺋﻞ وﻓﻬﻢ ﺗﺄﺛﻴﺮ ﻛﻞ ﻗﺮار ﺑﺸﻜﻞ دﻗﻴﻖ
-                        </div>
-                        <textarea id="dSolutionPlan" dir="auto" placeholder="Enter solution plan..."
-                            data-i18n-placeholder="placeholder_solution_plan"></textarea>
-                    </div>
-                </form>
+                    <textarea id="dSolutionPlan" dir="auto" placeholder="Enter solution plan..."
+                        data-i18n-placeholder="placeholder_solution_plan"></textarea>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn secondary" onclick="closeDiagnoseModal()">Cancel</button>
-                <button type="submit" form="diagnoseForm" class="btn" id="dSubmitBtn">Save Diagnose</button>
-            </div>
+            </form>
         </div>
+        <div class="modal-footer">
+            <button type="button" class="btn secondary" onclick="closeDiagnoseModal()">Cancel</button>
+            <button type="submit" form="diagnoseForm" class="btn" id="dSubmitBtn">Save Diagnose</button>
+        </div>
+    </div>
     </div>
 
     <!-- Session Modal -->
@@ -3173,7 +2997,7 @@
          * 1. Deploy your Apps Script as a Web App (Anyone with access)
          * 2. Paste the executable URL (/exec) below
          */
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzv9lWlKhHRdmWV2mysU2rQoGiY6IlVtCsbDi-Ij1mDUeyAI-pvP-v3G_MU-ALvIOSX/exec";
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyLq0fpnwdBThnuqmGifFsE133mdMmY-X6Bs3VPW6Mr5VgZOWKOeoxtJ20j0Gxl2T-6/exec";
 
         // google.script.run Bridge (Shim) for environments outside of GAS (like GitHub Pages)
         if (typeof google === 'undefined' || !google.script || !google.script.run) {
@@ -3378,28 +3202,14 @@
 
             renderCompanySearchResults('');
 
-            // Reset stars
-            document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
-            $('fScoreValue').textContent = '0.0';
-            $('fScore').value = '0.0';
-            ['fProdScore', 'fOpsScore', 'fSalesScore', 'fMktScore', 'fFinScore'].forEach(id => {
-                $(id).value = '0.0';
-                const container = $(id).parentElement.querySelector('.score-stars');
-                if (container) {
-                    container.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
-                    const valEl = container.querySelector('.score-value');
-                    if (valEl) valEl.textContent = '0.0';
-                }
-            });
-
-            // Reset counters
-            document.querySelectorAll('.char-counter .count').forEach(c => c.textContent = '0');
+            // Render Dynamic Fields
+            renderDynamicFormFields('feedback', 'feedbackDynamicFields');
 
             $('fSubmitBtn').textContent = i18n[document.documentElement.getAttribute('lang') || 'ar'].btn_submit;
 
             $('feedbackModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
-            markClean(); // Reset dirty flag on open
+            markClean();
             lastLoadedDay = null;
             if (followUpData.length === 0) {
                 loadFollowUpLazy(() => refreshFDayOptions(presetCompany || ''));
@@ -3466,46 +3276,39 @@
             $('dMentorNameDisplay').textContent = name;
             $('dCompanyName').value = company;
             $('dLocation').value = 'اسيوط'; // Reset to default
+            $('dCompanyNameDisplay').textContent = company;
+            $('dRoundName').value = (currentRound || 'Round_01').replace('R_', 'Round ');
 
-            // Auto-calculate age from startV raw data
-            const startStr = $('startV').getAttribute('data-raw');
-            if (startStr && startStr !== '—') {
-                $('dCompanyAge').value = calculateAge(startStr);
-            }
+            // Render Dynamic Fields
+            renderDynamicFormFields('diagnose', 'diagnoseDynamicFields');
 
-            showLoading('Checking existing diagnose...');
+            showLoading('Checking existing diagnosis...');
             google.script.run.withSuccessHandler(function (data) {
                 hideLoading();
                 if (data) {
-                    // data is the existing record
-                    // Mapping based on columns: D is 0 (relative to D), E is 1, etc.
-                    // In the sheet: D=4, E=5, F=6, G=7, H=8, J=10, K=11, L=12
-                    // But getDiagnoseData will return an object
-                    $('dHistory').value = data.history || '';
-                    $('dMainComplaint').value = data.mainComplaint || '';
-                    $('dSymptoms').value = data.symptoms || '';
-                    $('dSigns').value = data.signs || '';
-                    $('dExpertNotes').value = data.expertNotes || '';
-                    $('dPossibleCauses').value = data.possibleCauses || '';
-                    $('dTests').value = data.tests || '';
-                    $('dActualCause').value = data.actualCause || '';
-                    $('dSolutionPlan').value = data.solutionPlan || '';
-
-                    // Also try to parse Company Name (Column C) to get Age, Location, Team Size if possible
-                    if (data.companyCombined) {
-                        const parts = data.companyCombined.split(' \\ ');
-                        if (parts.length >= 4) {
-                            $('dCompanyAge').value = parts[1].trim();
-                            $('dLocation').value = parts[2].trim();
-                            $('dTeamSize').value = parts[3].trim();
+                    // Populate dynamic data if exists
+                    const fields = document.getElementById('diagnoseDynamicFields').querySelectorAll('[data-header]');
+                    fields.forEach(f => {
+                        const h = f.getAttribute('data-header');
+                        if (data[h] !== undefined) {
+                            if (f.tagName === 'TEXTAREA' || f.tagName === 'INPUT') f.value = data[h];
+                            else if (f.type === 'hidden') {
+                                // Star rating
+                                f.value = data[h];
+                                const container = f.parentElement.querySelector('.score-stars');
+                                if (container) {
+                                    updateStarsUI(container, parseFloat(data[h]));
+                                }
+                            }
                         }
+                    });
+
+                    if (data["Mentor Score"]) {
+                        $('dScore').value = data["Mentor Score"];
+                        updateStarsUI(document.querySelector('.d-stars'), parseFloat(data["Mentor Score"]));
                     }
                 }
                 $('diagnoseModal').style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }).withFailureHandler(function (err) {
-                hideLoading();
-                toast('Error checking existing data: ' + err.message);
                 document.body.style.overflow = 'hidden';
             }).getDiagnoseData(company);
         };
@@ -3547,7 +3350,192 @@
 
             $('adminStatsView').style.display = tab === 'stats' ? 'block' : 'none';
             $('adminManagementView').style.display = tab === 'management' ? 'block' : 'none';
+            $('adminQuestionsView').style.display = tab === 'questions' ? 'block' : 'none';
             $('adminSettingsView').style.display = tab === 'settings' ? 'block' : 'none';
+
+            if (tab === 'questions') {
+                loadAdminQuestions();
+            }
+        };
+
+        var currentAdminQuestionType = 'feedback';
+        var adminQuestionsBuffer = [];
+
+        const switchQuestionType = (type) => {
+            currentAdminQuestionType = type;
+            $('btnAdminQuestionsFeedback').classList.toggle('active', type === 'feedback');
+            $('btnAdminQuestionsDiagnose').classList.toggle('active', type === 'diagnose');
+            loadAdminQuestions();
+        };
+
+        const loadAdminQuestions = () => {
+            showLoading('تحميل الأسئلة...');
+            google.script.run.withSuccessHandler(function (questions) {
+                hideLoading();
+                adminQuestionsBuffer = questions;
+                renderAdminQuestions(questions);
+            }).getFormQuestions(currentAdminQuestionType);
+        };
+
+        const renderAdminQuestions = (questions) => {
+            const tbody = $('adminQuestionsTable');
+            tbody.innerHTML = questions.map(q => `
+                <tr>
+                    <td><div style="font-weight:700; font-family:monospace; font-size:12px;">${q.header}</div></td>
+                    <td>
+                        <div style="font-weight:600">${q.label}</div>
+                        <div style="font-size:11px; color:var(--muted)">${q.description || 'لا يوجد وصف'}</div>
+                    </td>
+                    <td><div class="badge secondary">${q.type}</div></td>
+                    <td style="text-align:center">
+                        <label class="switch">
+                            <input type="checkbox" ${!q.hidden ? 'checked' : ''} onchange="toggleQuestionVisibility('${q.header.replace(/'/g, "\\'")}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </td>
+                    <td style="text-align:center">
+                        <div style="display:flex; gap:8px; justify-content:center;">
+                            <button class="admin-action-btn" onclick="openEditQuestionModal('${q.header.replace(/'/g, "\\'")}')">تعديل</button>
+                            <button class="admin-action-btn" style="color:var(--danger); border-color:rgba(239, 68, 68, 0.2)" onclick="deleteQuestion('${q.header.replace(/'/g, "\\'")}')">حذف</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        const renderDynamicFormFields = (type, containerId) => {
+            const container = $(containerId);
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted)">Loading questions...</div>';
+
+            google.script.run.withSuccessHandler(function (questions) {
+                container.innerHTML = '';
+                questions.filter(q => !q.hidden).forEach(q => {
+                    const group = document.createElement('div');
+                    group.className = 'form-group';
+
+                    let inputHtml = '';
+                    if (q.type === 'star') {
+                        inputHtml = `
+                            <div class="score-stars dynamic-stars" data-field="${q.header}">
+                                <span class="star" data-value="1">★</span>
+                                <span class="star" data-value="2">★</span>
+                                <span class="star" data-value="3">★</span>
+                                <span class="star" data-value="4">★</span>
+                                <span class="star" data-value="5">★</span>
+                                <div class="score-value">0.0</div>
+                            </div>
+                            <input type="hidden" data-header="${q.header}" value="0.0">
+                        `;
+                    } else if (q.type === 'input') {
+                        inputHtml = `<input type="text" data-header="${q.header}" dir="auto" placeholder="${q.label}...">`;
+                    } else {
+                        inputHtml = `
+                            <textarea data-header="${q.header}" dir="auto" maxlength="1000" oninput="updateCharCount(this)" placeholder="${q.label}..."></textarea>
+                            <div class="char-counter"><span class="count">0</span> / 1000</div>
+                        `;
+                    }
+
+                    group.innerHTML = `
+                        <label>${q.label}</label>
+                        ${q.description ? `<div class="q-desc">${q.description}</div>` : ''}
+                        ${inputHtml}
+                    `;
+                    container.appendChild(group);
+                });
+
+                // Re-bind star clicks for dynamic fields
+                container.querySelectorAll('.dynamic-stars .star').forEach(star => {
+                    star.onclick = function () {
+                        const val = parseFloat(this.getAttribute('data-value'));
+                        const parent = this.parentElement;
+                        updateStarsUI(parent, val);
+                        const input = parent.parentElement.querySelector('input[type="hidden"]');
+                        if (input) input.value = val.toFixed(1);
+                        markDirty();
+                    };
+                });
+            }).getFormQuestions(type);
+        };
+
+        const updateStarsUI = (container, val) => {
+            container.querySelectorAll('.star').forEach(s => {
+                if (parseInt(s.getAttribute('data-value')) <= val) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+            const valEl = container.querySelector('.score-value');
+            if (valEl) valEl.textContent = val.toFixed(1);
+        };
+
+        const toggleQuestionVisibility = (header, visible) => {
+            const q = adminQuestionsBuffer.find(x => x.header === header);
+            if (!q) return;
+            q.hidden = !visible;
+            saveAdminQuestionRow(q);
+        };
+
+        const openEditQuestionModal = (header) => {
+            const q = adminQuestionsBuffer.find(x => x.header === header);
+            if (!q) return;
+            $('editQHeader').value = q.header;
+            $('editQLabel').value = q.label;
+            $('editQDesc').value = q.description;
+            $('editQType').value = q.type;
+            $('editQuestionModal').style.display = 'flex';
+        };
+
+        const submitEditQuestion = () => {
+            const header = $('editQHeader').value;
+            const q = adminQuestionsBuffer.find(x => x.header === header);
+            if (!q) return;
+
+            q.label = $('editQLabel').value;
+            q.description = $('editQDesc').value;
+            q.type = $('editQType').value;
+
+            saveAdminQuestionRow(q, () => {
+                $('editQuestionModal').style.display = 'none';
+            });
+        };
+
+        const saveAdminQuestionRow = (q, cb) => {
+            showLoading('جاري الحفظ...');
+            google.script.run.withSuccessHandler(() => {
+                hideLoading();
+                toast('تم الحفظ بنجاح');
+                if (cb) cb();
+                loadAdminQuestions();
+            }).saveFormQuestionSettings(currentAdminQuestionType, [q]);
+        };
+
+        const openAddQuestionModal = () => {
+            $('newQHeader').value = '';
+            $('newQType').value = 'textarea';
+            $('addQuestionModal').style.display = 'flex';
+        };
+
+        const submitAddQuestion = () => {
+            const header = $('newQHeader').value.trim();
+            const type = $('newQType').value;
+            if (!header) return toast('يرجى إدخال عنوان السؤال');
+
+            showLoading('جاري الإضافة...');
+            google.script.run.withSuccessHandler(() => {
+                hideLoading();
+                toast('تمت إضافة السؤال بنجاح');
+                $('addQuestionModal').style.display = 'none';
+                loadAdminQuestions();
+            }).addQuestionColumn(currentAdminQuestionType, header, type);
+        };
+
+        const deleteQuestion = (header) => {
+            if (!confirm(`هل أنت متأكد من حذف السؤال "${header}"؟ سيتم حذف العمود بالكامل من الجدول!`)) return;
+
+            showLoading('جاري الحذف...');
+            google.script.run.withSuccessHandler(() => {
+                hideLoading();
+                toast('تم الحذف بنجاح');
+                loadAdminQuestions();
+            }).deleteQuestionColumn(currentAdminQuestionType, header);
         };
 
         const loadAdminStats = () => {
@@ -3764,51 +3752,66 @@
             if (counter) counter.textContent = count;
         };
 
-        const openEditFollowupModal = (company, sessionNum, status, achievements, actions, score) => {
+        const openEditFollowupModal = (company, sessionNum) => {
             $('efCompany').value = company;
             $('efSessionNum').value = sessionNum;
-            $('efStatus').value = status || '';
-            $('efAchievements').value = achievements || '';
-            $('efActions').value = actions || '';
 
-            const val = parseFloat(score || 0);
-            $('efScore').value = val.toFixed(1);
-            $('efScoreValue').textContent = val.toFixed(1);
-            document.querySelectorAll('#efStarRating .ef-star').forEach(x => {
-                if (parseInt(x.getAttribute('data-value')) <= val) x.classList.add('active');
-                else x.classList.remove('active');
-            });
+            const companyData = followUpData.find(c => c.company.toLowerCase() === company.toLowerCase());
+            const session = companyData ? companyData.sessions.find(s => s.num === sessionNum) : null;
 
-            // Populating new evaluations for edit
-            const currentItem = followUpData.find(c => c.company.toLowerCase() === company.toLowerCase());
-            const currentSession = currentItem ? currentItem.sessions.find(s => s.num === sessionNum) : null;
-            if (currentSession) {
-                const fields = [
-                    { id: 'efProdScore', val: currentSession.prodScore },
-                    { id: 'efOpsScore', val: currentSession.opsScore },
-                    { id: 'efSalesScore', val: currentSession.salesScore },
-                    { id: 'efMktScore', val: currentSession.mktScore },
-                    { id: 'efFinScore', val: currentSession.finScore }
-                ];
-                fields.forEach(f => {
-                    const v = parseFloat(f.val || 0);
-                    $(f.id).value = v.toFixed(1);
-                    const container = $(f.id).parentElement.querySelector('.score-stars');
-                    if (container) {
-                        container.querySelectorAll('.star').forEach(s => {
-                            if (parseInt(s.getAttribute('data-value')) <= v) s.classList.add('active');
-                            else s.classList.remove('active');
-                        });
-                        const valEl = container.querySelector('.score-value');
-                        if (valEl) valEl.textContent = v.toFixed(1);
+            showLoading('جاري التحميل...');
+            google.script.run.withSuccessHandler(function (questions) {
+                hideLoading();
+                const container = $('editFollowupDynamicFields');
+                container.innerHTML = '';
+
+                questions.filter(q => !q.hidden).forEach(q => {
+                    const group = document.createElement('div');
+                    group.className = 'form-group';
+                    let val = session ? (session[q.header] || '') : '';
+
+                    let inputHtml = '';
+                    if (q.type === 'star') {
+                        const numVal = parseFloat(val || 0);
+                        inputHtml = `
+                            <div class="score-stars dynamic-stars" data-field="${q.header}">
+                                ${[1, 2, 3, 4, 5].map(v => `<span class="star ${v <= numVal ? 'active' : ''}" data-value="${v}">★</span>`).join('')}
+                                <div class="score-value">${numVal.toFixed(1)}</div>
+                            </div>
+                            <input type="hidden" data-header="${q.header}" value="${numVal.toFixed(1)}">
+                        `;
+                    } else if (q.type === 'input') {
+                        inputHtml = `<input type="text" data-header="${q.header}" dir="auto" value="${val.replace(/"/g, '&quot;')}" placeholder="${q.label}...">`;
+                    } else {
+                        inputHtml = `
+                            <textarea data-header="${q.header}" dir="auto" maxlength="1000" oninput="updateCharCount(this)" placeholder="${q.label}...">${val}</textarea>
+                            <div class="char-counter"><span class="count">${val.length}</span> / 1000</div>
+                        `;
                     }
+
+                    group.innerHTML = `
+                        <label>${q.label}</label>
+                        ${q.description ? `<div class="q-desc">${q.description}</div>` : ''}
+                        ${inputHtml}
+                    `;
+                    container.appendChild(group);
                 });
-            }
 
-            ['efStatus', 'efAchievements', 'efActions'].forEach(id => updateCharCount($(id)));
+                // Re-bind stars
+                container.querySelectorAll('.dynamic-stars .star').forEach(star => {
+                    star.onclick = function () {
+                        const v = parseFloat(this.getAttribute('data-value'));
+                        const parent = this.parentElement;
+                        updateStarsUI(parent, v);
+                        const input = parent.parentElement.querySelector('input[type="hidden"]');
+                        if (input) input.value = v.toFixed(1);
+                        markDirty();
+                    };
+                });
 
-            $('editFollowupModal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+                $('editFollowupModal').style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }).getFormQuestions('feedback');
         };
 
         const closeEditFollowupModal = () => {
@@ -4135,9 +4138,9 @@
                            ${s.file ? (lang === 'ar' ? '📎 عرض الملف المرفق' : '📎 View Uploaded File') : (lang === 'ar' ? '(لا يوجد ملفات)' : '(No Uploaded Files)')}
                          </a>
                          ${isOwner ? `
-                           <button class="btn" style="min-height:44px; padding:6px 20px; font-size:14px; border-radius:12px; background: rgba(79, 70, 229, 0.1); border: 1px solid var(--accent); white-space:nowrap;" onclick="event.stopPropagation(); openEditFollowupModal('${item.company.replace(/'/g, "\\'")}', ${s.num}, \`${(s.status || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, \`${(s.achievements || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, \`${(s.actions || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, '${s.score}')">
-                             ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
-                           </button>
+                            <button class="btn" style="min-height:44px; padding:6px 20px; font-size:14px; border-radius:12px; background: rgba(79, 70, 229, 0.1); border: 1px solid var(--accent); white-space:nowrap;" onclick="event.stopPropagation(); openEditFollowupModal('${item.company.replace(/'/g, "\\'")}', ${s.num})">
+                              ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
+                            </button>
                          ` : '<span class="tag" style="font-size: 11px; padding: 6px 12px; opacity: 0.6; background: rgba(0,0,0,0.05); border-radius:8px;">Read Only</span>'}
                       </div>
                    </div>
@@ -4333,19 +4336,18 @@
                 // Combined string for Column C
                 const combined = `${company} \\ ${age} \\ ${loc} \\ ${size}`;
 
+                const dynamicData = {};
+                document.getElementById('diagnoseDynamicFields').querySelectorAll('[data-header]').forEach(f => {
+                    dynamicData[f.getAttribute('data-header')] = f.value;
+                });
+
                 const formData = {
                     mentorName: $('dMentorName').value,
                     companyName: company,
                     companyCombined: combined,
-                    history: $('dHistory').value,
-                    mainComplaint: $('dMainComplaint').value,
-                    symptoms: $('dSymptoms').value,
-                    signs: $('dSigns').value,
-                    expertNotes: $('dExpertNotes').value,
-                    possibleCauses: $('dPossibleCauses').value,
-                    tests: $('dTests').value,
-                    actualCause: $('dActualCause').value,
-                    solutionPlan: $('dSolutionPlan').value
+                    dynamicData: dynamicData,
+                    mentorScore: $('dScore').value,
+                    roundName: (currentRound || 'Round_01').replace('R_', 'Round_')
                 };
 
                 google.script.run.withSuccessHandler(function () {
@@ -4397,18 +4399,16 @@
                 btn.disabled = true;
                 showLoading('Submitting feedback...');
 
+                const dynamicData = {};
+                document.getElementById('feedbackDynamicFields').querySelectorAll('[data-header]').forEach(f => {
+                    dynamicData[f.getAttribute('data-header')] = f.value;
+                });
+
                 const formData = {
                     mentorName: $('fMentorName').value,
                     companyName: $('fCompanyName').value,
                     dayOfSession: $('fDay').value,
-                    currentStatus: $('fStatus').value,
-                    achievements: $('fAchievements').value,
-                    actionSteps: $('fActionSteps').value,
-                    prodScore: $('fProdScore').value,
-                    opsScore: $('fOpsScore').value,
-                    salesScore: $('fSalesScore').value,
-                    mktScore: $('fMktScore').value,
-                    finScore: $('fFinScore').value,
+                    dynamicData: dynamicData,
                     mentorScore: $('fScore').value,
                     roundName: (currentRound || 'R_01').replace('R_', 'Round_')
                 };
@@ -4467,19 +4467,16 @@
                 btn.disabled = true;
                 showLoading('Saving changes...');
 
+                const dynamicData = {};
+                document.getElementById('editFollowupDynamicFields').querySelectorAll('[data-header]').forEach(f => {
+                    dynamicData[f.getAttribute('data-header')] = f.value;
+                });
+
                 const params = {
                     roundId: currentRound,
                     companyName: $('efCompany').value,
                     sessionNum: parseInt($('efSessionNum').value),
-                    status: $('efStatus').value,
-                    achievements: $('efAchievements').value,
-                    actions: $('efActions').value,
-                    prodScore: $('efProdScore').value,
-                    opsScore: $('efOpsScore').value,
-                    salesScore: $('efSalesScore').value,
-                    mktScore: $('efMktScore').value,
-                    finScore: $('efFinScore').value,
-                    score: $('efScore').value
+                    dynamicData: dynamicData
                 };
 
                 google.script.run.withSuccessHandler(function () {
@@ -4494,7 +4491,7 @@
                     hideLoading();
                     toast('Error: ' + err.message);
                     btn.disabled = false;
-                }).updateFollowupSession(params.roundId, params.companyName, params.sessionNum, params.status, params.achievements, params.actions, params.prodScore, params.opsScore, params.salesScore, params.mktScore, params.finScore, params.score);
+                }).updateFollowupSession(params.roundId, params.companyName, params.sessionNum, params.dynamicData);
             });
 
             // Star rating for Edit
@@ -4528,9 +4525,21 @@
                     );
 
                     if (isSubmitted) {
-                        $('fStatus').value = session.status || '';
-                        $('fAchievements').value = session.achievements || '';
-                        $('fActionSteps').value = session.actions || '';
+                        const fields = document.getElementById('feedbackDynamicFields').querySelectorAll('[data-header]');
+                        fields.forEach(f => {
+                            const h = f.getAttribute('data-header');
+                            if (session[h] !== undefined) {
+                                if (f.tagName === 'TEXTAREA' || f.tagName === 'INPUT') {
+                                    f.value = session[h];
+                                    if (f.tagName === 'TEXTAREA') updateCharCount(f);
+                                } else if (f.type === 'hidden') {
+                                    // Star rating
+                                    f.value = parseFloat(session[h] || 0).toFixed(1);
+                                    const container = f.parentElement.querySelector('.score-stars');
+                                    if (container) updateStarsUI(container, parseFloat(session[h] || 0));
+                                }
+                            }
+                        });
 
                         const score = parseFloat(session.score || 0);
                         $('fScore').value = score.toFixed(1);
@@ -4540,48 +4549,24 @@
                             else s.classList.remove('active');
                         });
 
-                        // Populating new evaluations for day switch
-                        const fields = [
-                            { id: 'fProdScore', val: session.prodScore },
-                            { id: 'fOpsScore', val: session.opsScore },
-                            { id: 'fSalesScore', val: session.salesScore },
-                            { id: 'fMktScore', val: session.mktScore },
-                            { id: 'fFinScore', val: session.finScore }
-                        ];
-                        fields.forEach(f => {
-                            const v = parseFloat(f.val || 0);
-                            $(f.id).value = v.toFixed(1);
-                            const container = $(f.id).parentElement.querySelector('.score-stars');
-                            if (container) {
-                                container.querySelectorAll('.star').forEach(s => {
-                                    if (parseInt(s.getAttribute('data-value')) <= v) s.classList.add('active');
-                                    else s.classList.remove('active');
-                                });
-                                const valEl = container.querySelector('.score-value');
-                                if (valEl) valEl.textContent = v.toFixed(1);
-                            }
-                        });
-
-                        lastLoadedDay = this.value; // Track that we loaded this day
+                        lastLoadedDay = this.value;
                         $('fSubmitBtn').textContent = i18n[lang].btn_save_changes;
                     } else {
-                        // NEW behavior: Only reset if we were previously viewing a loaded day
                         if (lastLoadedDay !== null) {
-                            ['fStatus', 'fAchievements', 'fActionSteps'].forEach(id => $(id).value = '');
+                            const fields = document.getElementById('feedbackDynamicFields').querySelectorAll('[data-header]');
+                            fields.forEach(f => {
+                                if (f.tagName === 'TEXTAREA' || f.tagName === 'INPUT') f.value = '';
+                                else if (f.type === 'hidden') {
+                                    f.value = '0.0';
+                                    const container = f.parentElement.querySelector('.score-stars');
+                                    if (container) updateStarsUI(container, 0);
+                                }
+                                if (f.tagName === 'TEXTAREA') updateCharCount(f);
+                            });
+
                             $('fScore').value = '0.0';
                             $('fScoreValue').textContent = '0.0';
                             document.querySelectorAll('#starRating .star').forEach(s => s.classList.remove('active'));
-
-                            // Reset new stars
-                            ['fProdScore', 'fOpsScore', 'fSalesScore', 'fMktScore', 'fFinScore'].forEach(id => {
-                                $(id).value = '0.0';
-                                const container = $(id).parentElement.querySelector('.score-stars');
-                                if (container) {
-                                    container.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
-                                    const valEl = container.querySelector('.score-value');
-                                    if (valEl) valEl.textContent = '0.0';
-                                }
-                            });
                         }
                         lastLoadedDay = null;
                         $('fSubmitBtn').textContent = i18n[lang].btn_submit;
