@@ -2758,7 +2758,7 @@
     <div class="modal" id="editFollowupModal">
         <div class="modal-content" style="max-width: 800px">
             <div class="modal-header">
-                <div class="modal-title" data-i18n="modal_session_title">Edit Session</div>
+                <div class="modal-title" id="modal_session_title" data-i18n="modal_session_title">Edit Session</div>
                 <button class="modal-close" onclick="closeEditFollowupModal()">×</button>
             </div>
             <div class="modal-body">
@@ -3256,6 +3256,9 @@
             document.body.style.overflow = 'auto';
             markClean();
             lastLoadedDay = null;
+            // Purge dynamic fields to avoid ID conflicts
+            const container = $('dynamicFeedbackFields');
+            if (container) container.innerHTML = '';
         };
 
         const openDiagnoseModal = () => {
@@ -3319,6 +3322,9 @@
         const closeDiagnoseModal = () => {
             $('diagnoseModal').style.display = 'none';
             document.body.style.overflow = 'auto';
+            // Purge dynamic fields to avoid ID conflicts
+            const container = $('dynamicDiagnoseFields');
+            if (container) container.innerHTML = '';
         };
 
         // === ADMIN LOGIC ===
@@ -3718,35 +3724,42 @@
             }).saveQuestionsConfig(currentQuestions, currentQuestionType);
         };
 
-        const openEditFollowupModal = (company, sessionNum) => {
+        const openSessionModal = (company, sessionNum) => {
             $('efCompany').value = company;
             $('efSessionNum').value = sessionNum;
 
-            showLoading('جاري تحميل بيانات الجلسة...');
+            const currentItem = followUpData.find(c => c.company.toLowerCase() === company.toLowerCase());
+            const session = currentItem ? currentItem.sessions.find(s => s.num === sessionNum) : null;
+
+            const isOwner = session && session.mentor && currentMentor && normalizeArabic(session.mentor) === normalizeArabic(currentMentor);
+
+            $('modal_session_title').textContent = isOwner ? (document.documentElement.getAttribute('lang') === 'ar' ? 'تعديل الجلسة' : 'Edit Session')
+                : (document.documentElement.getAttribute('lang') === 'ar' ? 'تفاصيل الجلسة' : 'Session Details');
+
+            showLoading(document.documentElement.getAttribute('lang') === 'ar' ? 'جاري تحميل البيانات...' : 'Loading session data...');
+
             renderDynamicFields('dynamicEditFields', 'feedback', () => {
                 hideLoading();
-
-                // Find data in local followUpData
-                const currentItem = followUpData.find(c => c.company.toLowerCase() === company.toLowerCase());
-                const session = currentItem ? currentItem.sessions.find(s => s.num === sessionNum) : null;
 
                 if (session) {
                     currentQuestions.forEach(q => {
                         const val = session[q.id];
-                        if (val !== undefined) {
+                        const el = $(q.id);
+                        if (el) {
                             if (q.type === 'rating') {
                                 setRatingValue(q.id, val || 0);
                             } else {
-                                const el = $(q.id);
-                                if (el) el.value = val || '';
+                                el.value = val || '';
                             }
-                        }
-                        if (q.type === 'text') {
-                            const el = $(q.id);
-                            if (el) updateCharCount(el);
+                            // Set disabled state based on ownership
+                            el.disabled = !isOwner;
+                            if (q.type === 'text') updateCharCount(el);
                         }
                     });
                 }
+
+                // Toggle Save button visibility
+                $('efSubmitBtn').style.display = isOwner ? 'block' : 'none';
 
                 $('editFollowupModal').style.display = 'flex';
                 document.body.style.overflow = 'hidden';
@@ -3756,6 +3769,9 @@
         const closeEditFollowupModal = () => {
             $('editFollowupModal').style.display = 'none';
             document.body.style.overflow = 'auto';
+            // Purge dynamic fields to avoid ID conflicts
+            const container = $('dynamicEditFields');
+            if (container) container.innerHTML = '';
         };
 
         function handleLogin() {
@@ -4214,7 +4230,7 @@
                     const hasLongStatus = s.status && s.status.length > 150;
 
                     return `
-                <div class="f-session" onclick="toggleSession(this)">
+                <div class="f-session" onclick="openSessionModal('${item.company.replace(/'/g, "\\'")}', ${s.num})">
                    <div class="f-session-header">
                       <div style="display:flex; flex-direction:column; gap:2px;">
                          <div class="f-session-num">Session ${s.num}</div>
@@ -4254,8 +4270,8 @@
                            ${s.file ? (lang === 'ar' ? '📎 عرض الملف المرفق' : '📎 View Uploaded File') : (lang === 'ar' ? '(لا يوجد ملفات)' : '(No Uploaded Files)')}
                          </a>
                          ${isOwner ? `
-                           <button class="btn" style="min-height:44px; padding:6px 20px; font-size:14px; border-radius:12px; background: rgba(79, 70, 229, 0.1); border: 1px solid var(--accent); white-space:nowrap;" onclick="event.stopPropagation(); openEditFollowupModal('${item.company.replace(/'/g, "\\'")}', ${s.num})">
-                             ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
+                           <button class="btn" style="min-height:44px; padding:6px 20px; font-size:14px; border-radius:12px; background: rgba(79, 70, 229, 0.1); border: 1px solid var(--accent); white-space:nowrap;" onclick="event.stopPropagation(); openSessionModal('${item.company.replace(/'/g, "\\'")}', ${s.num})">
+                             ✏️ ${lang === 'ar' ? (isOwner ? 'تعديل' : 'عرض') : (isOwner ? 'Edit' : 'View')}
                            </button>
                          ` : '<span class="tag" style="font-size: 11px; padding: 6px 12px; opacity: 0.6; background: rgba(0,0,0,0.05); border-radius:8px;">Read Only</span>'}
                       </div>
